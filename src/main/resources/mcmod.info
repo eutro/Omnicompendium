@@ -1,0 +1,17 @@
+[
+  {
+    "modid": "omnicompendium",
+    "name": "Omnicompendium",
+    "description": "Adds an in-game guide, the Omnicompendium, a set of guides created for the Omnifactory modpack.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "logoFile": "",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Eutros"],
+    "credits": "The Omnifactory dev team for the wonderful modpack.",
+    "parent": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
