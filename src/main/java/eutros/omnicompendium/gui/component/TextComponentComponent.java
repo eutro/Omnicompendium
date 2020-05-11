@@ -25,19 +25,36 @@ public class TextComponentComponent extends CompendiumComponent {
 
         for(String word : s.split(" ")) {
             if((fr.getStringWidth(builder.toString() + word)) >= GuiCompendium.INNER_WIDTH) {
-                addFactory(builder, ret);
-                builder = new StringBuilder(word + " ");
+                if(fr.getStringWidth(builder.toString()) != 0)
+                    addFactory(builder.toString(), ret);
+                builder = resolveWordWrap(word, ret);
             } else {
                 builder.append(word).append(" ");
             }
         }
-        addFactory(builder, ret);
+        addFactory(builder.toString(), ret);
 
         return ret;
     }
 
-    private static void addFactory(StringBuilder builder, List<ComponentFactory<TextComponentComponent>> ret) {
-        ret.add((x, y) -> new TextComponentComponent(new TextComponentString(builder.toString().trim()), x, y));
+    private static StringBuilder resolveWordWrap(String word, List<ComponentFactory<TextComponentComponent>> ret) {
+        FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
+        while(fr.getStringWidth(word) >= GuiCompendium.INNER_WIDTH) {
+            for(int i = word.length() - 1; i >= 0; i--) {
+                String s = word.substring(0, i);
+                if(fr.getStringWidth(s) <= GuiCompendium.INNER_WIDTH) {
+                    addFactory(s, ret);
+                    word = word.substring(i);
+                    break;
+                }
+            }
+        }
+
+        return new StringBuilder(word + " ");
+    }
+
+    private static void addFactory(String s, List<ComponentFactory<TextComponentComponent>> ret) {
+        ret.add((x, y) -> new TextComponentComponent(new TextComponentString(s.trim()), x, y));
     }
 
     @Override

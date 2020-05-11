@@ -18,7 +18,7 @@ public class GuiCompendium extends GuiScreen {
     public static final int BORDER_Y = 11;
     public static final int TOP_OFFSET = 2;
 
-    private CompendiumEntry entry = CompendiumEntry.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntry.BROKEN);
+    private ICompendiumPage entry = CompendiumEntry.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntry.BROKEN);
 
     public GuiCompendium() {
         super();
