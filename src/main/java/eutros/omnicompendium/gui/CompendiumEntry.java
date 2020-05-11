@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
@@ -29,7 +30,7 @@ public class CompendiumEntry implements ICompendiumPage {
     public static final String BOLD_REPLACE = "&l$2&l";
     public static final Pattern ITALIC_PATTERN = Pattern.compile("(?<!\\\\)([*_])(.+?)\\1");
     public static final String ITALIC_REPLACE = "&o$2&o";
-    public static final Pattern LINK_PATTERN = Pattern.compile("^(!)?\\[(.*)]\\((.*)\\)$");
+    public static final Pattern IMG_PATTERN = Pattern.compile("^!\\[(.*)]\\((.*)\\)$");
     public static final Pattern HR_PATTERN = Pattern.compile("^-{3,}|\\*{3,}|_{3,}$");
     public static final Pattern HEADING_PATTERN = Pattern.compile("^(#+)\\s*(.*)$");
     public static final Pattern POST_PROCESSING_PATTERN = Pattern.compile("\\\\([\\\\*_~])");
@@ -42,6 +43,10 @@ public class CompendiumEntry implements ICompendiumPage {
     private String markdown;
     private List<CompendiumComponent> components;
     private int constructionY;
+    protected GuiCompendium compendium;
+
+    @Nullable
+    public File source;
 
     public CompendiumEntry(String markdown) {
         this.markdown = COMMENT_PATTERN.matcher(markdown).replaceAll("");
@@ -78,7 +83,7 @@ public class CompendiumEntry implements ICompendiumPage {
             Matcher matcher = HEADING_PATTERN.matcher(s);
 
             if(matcher.matches()) {
-                List<HeaderComponent.ComponentFactory<HeaderComponent>> factories = HeaderComponent.fromString(matcher.group(2), matcher.group(1).length());
+                List<HeaderComponent.ComponentFactory<HeaderComponent>> factories = HeaderComponent.fromString(matcher.group(2), matcher.group(1).length(), this);
                 for(HeaderComponent.ComponentFactory<HeaderComponent> factory : factories) {
                     addComponent(factory.create(0, constructionY));
                 }
@@ -87,24 +92,17 @@ public class CompendiumEntry implements ICompendiumPage {
 
             s = POST_PROCESSING_PATTERN.matcher(s).replaceAll(POST_PROCESSING_REPLACE);
 
-            matcher = LINK_PATTERN.matcher(s);
+            matcher = IMG_PATTERN.matcher(s);
 
             if(matcher.find()) {
-                //noinspection IfStatementWithIdenticalBranches
-                if(matcher.group(1) != null && matcher.group(1).equals("!")) {
-                    // TODO image components
-                    addComponent(BlankComponent.getInstance());
-                    continue;
-                } else {
-                    // TODO links
-                    addComponent(BlankComponent.getInstance());
-                    continue;
-                }
+                // TODO image components
+                addComponent(BlankComponent.getInstance());
+                continue;
             }
 
             // TODO code blocks
 
-            List<CompendiumComponent.ComponentFactory<TextComponentComponent>> factories = TextComponentComponent.fromString(s);
+            List<CompendiumComponent.ComponentFactory<TextComponentComponent>> factories = TextComponentComponent.fromString(s, this);
             for(CompendiumComponent.ComponentFactory<TextComponentComponent> factory : factories) {
                 addComponent(factory.create(0, constructionY));
             }
@@ -119,7 +117,9 @@ public class CompendiumEntry implements ICompendiumPage {
     public static Optional<CompendiumEntry> fromSource(File source) {
         return Optional.ofNullable(entryMap.computeIfAbsent(source.toString(), src -> {
             try {
-                return new CompendiumEntry(String.join("\n", Files.readAllLines(new File(src).toPath())));
+                CompendiumEntry entry = new CompendiumEntry(String.join("\n", Files.readAllLines(new File(src).toPath())));
+                entry.source = source;
+                return entry;
             } catch(IOException e) {
                 return null;
             }
@@ -153,21 +153,50 @@ public class CompendiumEntry implements ICompendiumPage {
                     regexSerializer.apply(Config.url) +
                     "/blob/" +
                     regexSerializer.apply(Config.branch) +
-                    "/)?(?<relative>.+)"
+                    "/)?(?<relative>(\\\\[a-z_\\-\\s0-9.]+)+(\\.(txt|md))?)$"
             );
 
-    public static Optional<CompendiumEntry> fromLink(String link) {
+    public static Optional<CompendiumEntry> fromLink(String link, @Nullable File source) {
         Matcher matcher = linkChecker.apply(Config.url, Config.branch).matcher(link);
         if(!matcher.matches()) {
             return Optional.empty();
         }
-        return fromSource(new File(GitLoader.DIR, matcher.group("relative")));
+        String relativePath = matcher.group("relative");
+        String parent = null;
+        if(source != null) {
+            parent = source.getParent();
+        }
+        if(parent == null) {
+            parent = GitLoader.DIR.getPath();
+        }
+
+        return fromSource(new File(parent, relativePath));
     }
 
     public void draw() {
         for(CompendiumComponent component : components) {
             component.draw();
         }
+    }
+
+    @Override
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        for(CompendiumComponent component : this.components) {
+            if(component.y < mouseY
+                    && component.y + component.getHeight() > mouseY
+                    && component.x < mouseX) {
+                component.mouseClicked(mouseX, mouseY, mouseButton);
+            }
+        }
+    }
+
+    public CompendiumEntry setCompendium(GuiCompendium compendium) {
+        this.compendium = compendium;
+        return this;
+    }
+
+    public GuiCompendium getCompendium() {
+        return compendium;
     }
 
 }
