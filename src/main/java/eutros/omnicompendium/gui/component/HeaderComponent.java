@@ -1,6 +1,6 @@
 package eutros.omnicompendium.gui.component;
 
-import eutros.omnicompendium.gui.CompendiumEntry;
+import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.gui.GuiCompendium;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -32,7 +32,7 @@ public class HeaderComponent extends TextComponentComponent {
         double sf = scaleFactorOfSize(size);
 
         for(String word : s.split(" ")) {
-            if((fr.getStringWidth(builder.toString() + word)) * sf >= GuiCompendium.INNER_WIDTH) {
+            if((fr.getStringWidth(builder.toString() + word)) * sf >= GuiCompendium.ENTRY_WIDTH) {
                 if(fr.getStringWidth(builder.toString()) != 0)
                     addFactory(size, builder.toString(), ret, entry);
                 builder = resolveWordWrap(size, word, ret, entry);
@@ -48,10 +48,10 @@ public class HeaderComponent extends TextComponentComponent {
     private static StringBuilder resolveWordWrap(int size, String word, List<ComponentFactory<HeaderComponent>> ret, CompendiumEntry entry) {
         double sf = scaleFactorOfSize(size);
         FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
-        while(fr.getStringWidth(word) * sf >= GuiCompendium.INNER_WIDTH) {
+        while(fr.getStringWidth(word) * sf >= GuiCompendium.ENTRY_WIDTH) {
             for(int i = word.length() - 1; i >= 0; i--) {
                 String s = TextFormatting.BOLD + word.substring(0, i);
-                if(fr.getStringWidth(s) * sf <= GuiCompendium.INNER_WIDTH) {
+                if(fr.getStringWidth(s) * sf <= GuiCompendium.ENTRY_WIDTH) {
                     addFactory(size, s, ret, entry);
                     word = word.substring(i);
                     break;
@@ -75,7 +75,7 @@ public class HeaderComponent extends TextComponentComponent {
     protected void drawComponent() {
         double sf = scaleFactorOfSize(size);
         GlStateManager.scale(sf, sf, 1);
-        super.drawComponent();
+        Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(text.getFormattedText(), 0, 0, getColor());
     }
 
 }

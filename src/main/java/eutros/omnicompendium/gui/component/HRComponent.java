@@ -12,12 +12,17 @@ public class HRComponent extends CompendiumComponent {
 
     @Override
     protected void drawComponent() {
-        GuiScreen.drawRect(2, 4, GuiCompendium.INNER_WIDTH - 2, 5, COLOR);
+        GuiScreen.drawRect(2, 4, GuiCompendium.ENTRY_WIDTH - 2, 5, COLOR);
     }
 
     @Override
     public int getHeight() {
         return Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT;
+    }
+
+    @Override
+    public String toString() {
+        return "---";
     }
 
 }

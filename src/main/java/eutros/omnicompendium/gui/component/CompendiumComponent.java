@@ -2,11 +2,9 @@ package eutros.omnicompendium.gui.component;
 
 import net.minecraft.client.renderer.GlStateManager;
 
-import java.awt.*;
-
 public abstract class CompendiumComponent {
 
-    static final int COLOR = new Color(0, 191, 191).getRGB();
+    public static final int COLOR = 0xFF888888;
     public final int x;
     public final int y;
 

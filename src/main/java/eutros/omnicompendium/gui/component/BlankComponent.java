@@ -27,4 +27,9 @@ public class BlankComponent extends CompendiumComponent {
         return INSTANCE;
     }
 
+    @Override
+    public String toString() {
+        return "";
+    }
+
 }
