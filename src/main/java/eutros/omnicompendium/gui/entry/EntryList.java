@@ -1,41 +1,41 @@
 package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
-import eutros.omnicompendium.gui.ICompendiumPage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class EntryList {
 
     private static final double SCROLL_SENSITIVITY = 0.2;
 
     private int scroll;
-    private final List<CompendiumEntry> entries;
+    private final List<eutros.omnicompendium.gui.entry.CompendiumEntry> entries;
 
     public static final int ICON_MIN_V = 128;
     public static final int ICON_HEIGHT = 16;
 
-    public EntryList(List<CompendiumEntry> entries) {
+    public EntryList(List<eutros.omnicompendium.gui.entry.CompendiumEntry> entries) {
         this.entries = entries;
         scroll = 0;
     }
 
-    public void draw(ICompendiumPage currentPage, GuiCompendium gui, int mouseX, int mouseY) {
+    public void draw(CompendiumEntry currentPage, GuiCompendium gui) {
         int pointer = this.scroll;
-        Iterator<CompendiumEntry> it = entries.listIterator(pointer / ICON_HEIGHT);
+        Iterator<eutros.omnicompendium.gui.entry.CompendiumEntry> it = entries.listIterator(pointer / ICON_HEIGHT);
 
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
+        GlStateManager.enableDepth();
+        RenderHelper.enableStandardItemLighting();
         Minecraft.getMinecraft().getTextureManager().bindTexture(GuiCompendium.BOOK_GUI_TEXTURES);
         while(it.hasNext()) {
-            CompendiumEntry entry = it.next();
+            eutros.omnicompendium.gui.entry.CompendiumEntry entry = it.next();
             int topCrop = Math.floorMod(pointer, 16);
             int botCrop = Math.max(0, pointer - scroll + ICON_HEIGHT - GuiCompendium.ENTRY_LIST_HEIGHT);
 
@@ -55,11 +55,10 @@ public class EntryList {
             GlStateManager.translate(0, shift, 0);
             pointer += shift;
         }
+        RenderHelper.disableStandardItemLighting();
+        GlStateManager.disableDepth();
         GlStateManager.disableBlend();
         GlStateManager.popMatrix();
-
-        if(mouseX < GuiCompendium.ENTRY_LIST_WIDTH && mouseX > 0)
-            getEntryUnderMouse(mouseY).ifPresent(entry -> gui.drawHoveringText(entry.getTitle(), mouseX, mouseY));
     }
 
     public boolean handleMouseInput(int mouseY, GuiCompendium gui) {
@@ -77,7 +76,7 @@ public class EntryList {
         boolean buttonState = Mouse.getEventButtonState();
 
         if(button == 0 && buttonState) {
-            Optional<CompendiumEntry> entry = getEntryUnderMouse(mouseY);
+            Optional<eutros.omnicompendium.gui.entry.CompendiumEntry> entry = getEntryUnderMouse(mouseY);
             entry.ifPresent(gui::setEntry);
 
             flag |= entry.isPresent();
@@ -89,7 +88,7 @@ public class EntryList {
 
 
     @Nonnull
-    private Optional<CompendiumEntry> getEntryUnderMouse(int mouseY) {
+    private Optional<eutros.omnicompendium.gui.entry.CompendiumEntry> getEntryUnderMouse(int mouseY) {
         if(mouseY < 0)
             return Optional.empty();
 
@@ -99,6 +98,17 @@ public class EntryList {
             return Optional.empty();
 
         return Optional.of(entries.get(index));
+    }
+
+    @Nullable
+    public List<String> getTooltip(int mouseX, int mouseY) {
+        if(mouseX > 0 && mouseX < GuiCompendium.ENTRY_LIST_WIDTH)
+            return getEntryUnderMouse(mouseY)
+                    .map(CompendiumEntry::getTitle)
+                    .map(Collections::singletonList)
+                    .orElse(null);
+
+        return null;
     }
 
 }

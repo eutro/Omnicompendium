@@ -10,8 +10,11 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Mouse;
 
+import javax.annotation.Nonnull;
+import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,7 +26,6 @@ public class GuiCompendium extends GuiScreen {
     public static final int TEX_SIZE = 256;
 
     public static final int TOP_OFFSET = 2;
-    public static final double TEXT_SCALE = 0.8;
     public static final double GUI_SCALE = 2;
 
     public static final int ENTRY_WIDTH = (int) (198 * GUI_SCALE);
@@ -37,7 +39,7 @@ public class GuiCompendium extends GuiScreen {
 
     private final EntryList entryList;
 
-    private ICompendiumPage entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
+    private CompendiumEntry entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
 
     public GuiCompendium() {
         super();
@@ -47,7 +49,7 @@ public class GuiCompendium extends GuiScreen {
                 .map(CompendiumEntries::fromSource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted(Comparator.comparing(CompendiumEntry::getTitle))
+                .sorted(Comparator.comparing(eutros.omnicompendium.gui.entry.CompendiumEntry::getTitle))
                 .collect(Collectors.toList()));
     }
 
@@ -57,49 +59,71 @@ public class GuiCompendium extends GuiScreen {
 
 
         int i = getGuiOffsetX();
-        mouseX -= i;
-        mouseY -= TOP_OFFSET;
+        Point mouse = new Point(mouseX - i, mouseY - TOP_OFFSET);
+        Point entryListMouse = transmuteEntryListMouse(mouse);
+        Point entryMouse = transmuteEntryMouse(mouse);
 
-        GlStateManager.pushMatrix();
-
-        GlStateManager.translate(i, TOP_OFFSET, 0);
         {
             GlStateManager.pushMatrix();
 
-            GlStateManager.scale(GUI_SCALE, GUI_SCALE, 0);
-            this.mc.getTextureManager().bindTexture(BOOK_GUI_TEXTURES);
-            this.drawTexturedModalRect(0, 0, 0, 0, TEX_SIZE, TEX_SIZE / 2);
+            GlStateManager.translate(i, TOP_OFFSET, 0);
+            {
+                GlStateManager.pushMatrix();
+
+                GlStateManager.scale(GUI_SCALE, GUI_SCALE, 0);
+                this.mc.getTextureManager().bindTexture(BOOK_GUI_TEXTURES);
+                this.drawTexturedModalRect(0, 0, 0, 0, TEX_SIZE, TEX_SIZE / 2);
+
+                GlStateManager.popMatrix();
+            }
+
+            {
+                GlStateManager.pushMatrix();
+                drawEntryList();
+                GlStateManager.popMatrix();
+            }
+
+            {
+                GlStateManager.pushMatrix();
+                drawEntry(entryMouse);
+                GlStateManager.popMatrix();
+            }
 
             GlStateManager.popMatrix();
         }
 
-        {
-            GlStateManager.pushMatrix();
-            drawEntry(mouseX, mouseY);
-            GlStateManager.popMatrix();
-        }
+        List<String> tooltip = entry.getTooltip(entryMouse.x, entryMouse.y);
 
-        {
-            GlStateManager.pushMatrix();
-            drawEntryList(mouseX, mouseY);
-            GlStateManager.popMatrix();
-        }
+        if(tooltip == null)
+            tooltip = entryList.getTooltip(entryListMouse.x, entryListMouse.y);
 
-        GlStateManager.popMatrix();
+        if(tooltip != null) {
+            drawHoveringText(tooltip, mouseX, mouseY);
+        }
+    }
+
+    @Nonnull
+    private Point transmuteEntryMouse(Point mouse) {
+        return new Point(mouse.x - ENTRY_X, mouse.y - ENTRY_Y);
+    }
+
+    @Nonnull
+    private Point transmuteEntryListMouse(Point mouse) {
+        return new Point(mouse.x, mouse.y - ENTRY_LIST_Y);
     }
 
     private int getGuiOffsetX() {
         return (int) ((this.width - TEX_SIZE * GUI_SCALE) / 2);
     }
 
-    private void drawEntryList(int mouseX, int mouseY) {
+    private void drawEntryList() {
         GlStateManager.translate(0, ENTRY_LIST_Y, 0);
-        entryList.draw(entry, this, mouseX, mouseY - ENTRY_LIST_Y);
+        entryList.draw(entry, this);
     }
 
-    private void drawEntry(int mouseX, int mouseY) {
+    private void drawEntry(Point mouse) {
         GlStateManager.translate(ENTRY_X, ENTRY_Y, 0);
-        entry.draw(mouseX - ENTRY_X, mouseY - ENTRY_Y);
+        entry.draw(mouse.x, mouse.y);
     }
 
     @Override
@@ -116,7 +140,7 @@ public class GuiCompendium extends GuiScreen {
         entry.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    public void setEntry(ICompendiumPage entry) {
+    public void setEntry(CompendiumEntry entry) {
         this.entry = entry;
         entry.setCompendium(this);
         entry.reset();

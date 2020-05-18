@@ -1,7 +1,6 @@
 package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
-import eutros.omnicompendium.gui.ICompendiumPage;
 import eutros.omnicompendium.gui.component.*;
 import eutros.omnicompendium.helper.ClickHelper.ClickableComponent;
 import eutros.omnicompendium.helper.TextComponentParser;
@@ -15,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-public class CompendiumEntry implements ICompendiumPage {
+public class CompendiumEntry {
 
     private String markdown;
     private List<CompendiumComponent> components;
@@ -100,21 +99,15 @@ public class CompendiumEntry implements ICompendiumPage {
 
     public void draw(int mouseX, int mouseY) {
         GlStateManager.translate(0, -scroll, 0);
+        GlStateManager.enableBlend();
+        GlStateManager.disableLighting();
         for(CompendiumComponent component : components) {
             component.draw();
         }
-
-        for(ClickableComponent component : clickableComponents) {
-            if(component.isHovered(mouseX, mouseY)) {
-                List<String> tooltip = component.getTooltip();
-                if(tooltip != null) {
-                    getCompendium().drawHoveringText(tooltip, mouseX, mouseY);
-                }
-            }
-        }
+        GlStateManager.enableLighting();
+        GlStateManager.disableBlend();
     }
 
-    @Override
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         mouseY += scroll;
 
@@ -129,16 +122,29 @@ public class CompendiumEntry implements ICompendiumPage {
         return this;
     }
 
-    @Override
     public void reset() {
         scroll = 0;
     }
 
     public static final double SCROLL_SENSITIVITY = 0.1;
 
-    @Override
     public void handleMouseInput() {
         scroll = (int) Math.max(0, scroll - Mouse.getDWheel() * SCROLL_SENSITIVITY);
+    }
+
+    @Nullable
+    public List<String> getTooltip(int mouseX, int mouseY) {
+        mouseY += scroll;
+        for(ClickableComponent component : clickableComponents) {
+            if(component.isHovered(mouseX, mouseY)) {
+                List<String> tooltip = component.getTooltip();
+                if(tooltip != null) {
+                    return tooltip;
+                }
+            }
+        }
+
+        return null;
     }
 
     public GuiCompendium getCompendium() {
