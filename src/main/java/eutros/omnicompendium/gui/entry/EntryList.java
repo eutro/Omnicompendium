@@ -4,6 +4,7 @@ import eutros.omnicompendium.gui.GuiCompendium;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
@@ -89,7 +90,7 @@ public class EntryList {
 
     @Nonnull
     private Optional<eutros.omnicompendium.gui.entry.CompendiumEntry> getEntryUnderMouse(int mouseY) {
-        if(mouseY < 0)
+        if(mouseY < 0 || mouseY > GuiCompendium.ENTRY_LIST_HEIGHT)
             return Optional.empty();
 
         mouseY += scroll;
@@ -104,8 +105,14 @@ public class EntryList {
     public List<String> getTooltip(int mouseX, int mouseY) {
         if(mouseX > 0 && mouseX < GuiCompendium.ENTRY_LIST_WIDTH)
             return getEntryUnderMouse(mouseY)
-                    .map(CompendiumEntry::getTitle)
-                    .map(Collections::singletonList)
+                    .map(entry -> {
+                        ArrayList<String> tooltip = new ArrayList<>();
+                        tooltip.add(entry.getTitle());
+                        if(entry.source != null) {
+                            tooltip.add(TextFormatting.BLUE + "" +  TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
+                        }
+                        return tooltip;
+                    })
                     .orElse(null);
 
         return null;

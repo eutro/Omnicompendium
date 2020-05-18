@@ -56,7 +56,7 @@ public class TextComponentComponent extends CompendiumComponent {
                 if(fr.getStringWidth(builder.toString()) != 0)
                     addFactory(builder.toString(), ret, entry);
                 builder = resolveWordWrap(word, st -> ret.add((x, y) -> {
-                            TextComponentString component = new TextComponentString(s.trim());
+                            TextComponentString component = new TextComponentString(st.trim());
                             if(link != null) {
                                 entry.addClickComponent(ClickableComponent.bySize(
                                         x,
