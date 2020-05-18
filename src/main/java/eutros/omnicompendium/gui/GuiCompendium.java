@@ -4,7 +4,7 @@ import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.gui.entry.EntryList;
-import eutros.omnicompendium.loader.BookLoader;
+import eutros.omnicompendium.helper.FileHelper;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
@@ -37,12 +37,12 @@ public class GuiCompendium extends GuiScreen {
 
     private final EntryList entryList;
 
-    private ICompendiumPage entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.BROKEN).setCompendium(this);
+    private ICompendiumPage entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
 
     public GuiCompendium() {
         super();
         this.setGuiSize(TEX_SIZE, TEX_SIZE);
-        entryList = new EntryList(BookLoader.getEntries()
+        entryList = new EntryList(FileHelper.getEntries()
                 .stream()
                 .map(CompendiumEntries::fromSource)
                 .filter(Optional::isPresent)
@@ -105,11 +105,9 @@ public class GuiCompendium extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         mouseX -= getGuiOffsetX();
-        mouseX /= TEXT_SCALE;
         mouseX -= ENTRY_X;
 
         mouseY -= TOP_OFFSET;
-        mouseY /= TEXT_SCALE;
         mouseY -= ENTRY_Y;
 
         if(mouseX < 0 || mouseY < 0)

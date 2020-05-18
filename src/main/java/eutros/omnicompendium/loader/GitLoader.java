@@ -4,11 +4,11 @@ import eutros.omnicompendium.Config;
 import eutros.omnicompendium.Omnicompendium;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.lib.Repository;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,6 +21,7 @@ public class GitLoader {
 
     public static final File DIR = new File(Minecraft.getMinecraft().gameDir, "Omnicompendium");
     public static File configFile = new File(DIR, "_config.txt");
+    public static String branch = Config.branch;
 
     public static void syncRepo() {
         try {
@@ -33,12 +34,16 @@ public class GitLoader {
                 }
 
                 Git git = Git.open(DIR);
-                if(!git.getRepository().getBranch().equals(Config.branch)) {
-                    CheckoutCommand checkout = git.checkout();
-                    checkout.setName(Config.branch);
-                    checkout.call();
+                Repository repo = git.getRepository();
+                if(!repo.getBranch().equals(Config.branch)) {
+                    git.checkout()
+                            .setName(Config.branch)
+                            .call();
                 }
-                git.pull().call();
+                git.pull()
+                        .setRemoteBranchName(Config.branch)
+                        .call();
+                branch = repo.getBranch();
                 git.close();
             } catch(RepositoryNotFoundException | NoSuchFileException e) {
                 gitClone();
@@ -58,6 +63,7 @@ public class GitLoader {
         FileWriter writer = new FileWriter(configFile);
         writer.write(Config.url);
         writer.close();
+        branch = git.getRepository().getBranch();
         git.close();
     }
 

@@ -24,9 +24,6 @@ public abstract class CompendiumComponent {
 
     protected abstract void drawComponent();
 
-    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-    }
-
     @FunctionalInterface
     public interface ComponentFactory<T extends CompendiumComponent> {
 

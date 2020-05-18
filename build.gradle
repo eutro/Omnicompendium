@@ -1,4 +1,4 @@
-configurations{
+configurations {
     shade
     compile.extendsFrom shade
 }
@@ -34,13 +34,29 @@ repositories {
     }
 }
 
-dependencies {
-    shade group: "org.eclipse.jgit", name: "org.eclipse.jgit", version: "5.7.0.202003110725-r"
+configurations {
+    shade
+    compileOnly.extendsFrom shade
 }
 
-reobf{
-    jar{
-        extraLines "PK: org/eclipes/jgit eutros/omnicompendium/shade/jgit"
+sourceSets {
+    main.compileClasspath += configurations.shade
+    main.runtimeClasspath += configurations.shade
+    test.compileClasspath += configurations.shade
+    test.runtimeClasspath += configurations.shade
+}
+
+dependencies {
+    shade "org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r"
+}
+
+reobf {
+    jar {
+        extraLines "PK: org/eclipse eutros/omnicompendium/shade/org/eclipse"
+        extraLines "PK: org/bouncycastle eutros/omnicompendium/shade/org/bouncycastle"
+        extraLines "PK: org/slf4j eutros/omnicompendium/shade/org/slf4j"
+        extraLines "PK: com/jcraft eutros/omnicompendium/shade/com/jcraft"
+        extraLines "PK: com/googlecode eutros/omnicompendium/shade/com/googlecode"
     }
 }
 
@@ -58,8 +74,8 @@ minecraft {
 }
 
 jar {
-    configurations.shade.each{ dep ->
-        from(project.zipTree(dep)){
+    configurations.shade.each { dep ->
+        from(project.zipTree(dep)) {
             exclude 'META-INF', 'META-INF/**'
         }
     }

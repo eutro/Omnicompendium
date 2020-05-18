@@ -1,7 +1,6 @@
 package eutros.omnicompendium.gui.entry;
 
-import eutros.omnicompendium.Config;
-import eutros.omnicompendium.loader.GitLoader;
+import eutros.omnicompendium.helper.FileHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
@@ -18,7 +17,11 @@ import java.util.stream.Collectors;
 
 public class CompendiumEntries {
 
-    public static final CompendiumEntry BROKEN = new CompendiumEntry(I18n.format("omnicompendium.entry.broken"));
+    public static class Entries {
+
+        public static final CompendiumEntry BROKEN = new CompendiumEntry(I18n.format("omnicompendium.entry.broken"));
+
+    }
 
     private static Map<String, CompendiumEntry> entryMap = new HashMap<>();
     private static Pattern regex = Pattern.compile("[.^$*+?()\\[{\\\\|]");
@@ -27,12 +30,12 @@ public class CompendiumEntries {
         return regex.matcher(s).replaceAll("\\\\$0");
     }
 
-    private static Pattern getLinkChecker(String url, String branch) {
-        return Pattern.compile("(" +
+    public static Pattern linkChecker;
+
+    public static void setLinkChecker(String url, String branch) {
+        linkChecker = Pattern.compile("(" +
                 serializeRegex(url) +
-                "/blob/" +
-                serializeRegex(branch) +
-                "/)?(?<relative>(\\\\[a-z_\\-\\s0-9.]+)+(\\.(txt|md))?)$");
+                "/blob/.+?/)?(?<relative>([a-zA-Z_\\-\\s0-9.]+)\\.md)$");
     }
 
     public static Optional<CompendiumEntry> fromSource(File source) {
@@ -61,20 +64,14 @@ public class CompendiumEntries {
     }
 
     public static Optional<CompendiumEntry> fromLink(String link, @Nullable File source) {
-        Matcher matcher = getLinkChecker(Config.url, Config.branch).matcher(link);
+        Matcher matcher = linkChecker.matcher(link);
         if(!matcher.matches()) {
             return Optional.empty();
         }
         String relativePath = matcher.group("relative");
-        String parent = null;
-        if(source != null) {
-            parent = source.getParent();
-        }
-        if(parent == null) {
-            parent = GitLoader.DIR.getPath();
-        }
+        File file = FileHelper.getRelative(source, relativePath);
 
-        return fromSource(new File(parent, relativePath));
+        return fromSource(file);
     }
 
 }

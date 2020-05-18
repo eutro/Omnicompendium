@@ -3,6 +3,7 @@ package eutros.omnicompendium.gui.entry;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.ICompendiumPage;
 import eutros.omnicompendium.gui.component.*;
+import eutros.omnicompendium.helper.ClickHelper.ClickableComponent;
 import eutros.omnicompendium.helper.TextComponentParser;
 import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Mouse;
@@ -24,6 +25,8 @@ public class CompendiumEntry implements ICompendiumPage {
     @Nullable
     public File source;
     private int scroll = 0;
+
+    private List<ClickableComponent> clickableComponents = new ArrayList<>();
 
     public CompendiumEntry(String markdown) {
         this.markdown = Constants.COMMENT_PATTERN.matcher(markdown).replaceAll("");
@@ -83,7 +86,7 @@ public class CompendiumEntry implements ICompendiumPage {
 
             // TODO code blocks
 
-            List<CompendiumComponent.ComponentFactory<TextComponentComponent>> factories = TextComponentComponent.fromString(s, this);
+            List<CompendiumComponent.ComponentFactory<TextComponentComponent>> factories = TextComponentComponent.fromString(s, this, constructionY);
             for(CompendiumComponent.ComponentFactory<TextComponentComponent> factory : factories) {
                 addComponent(factory.create(0, constructionY));
             }
@@ -100,18 +103,24 @@ public class CompendiumEntry implements ICompendiumPage {
         for(CompendiumComponent component : components) {
             component.draw();
         }
+
+        for(ClickableComponent component : clickableComponents) {
+            if(component.isHovered(mouseX, mouseY)) {
+                List<String> tooltip = component.getTooltip();
+                if(tooltip != null) {
+                    getCompendium().drawHoveringText(tooltip, mouseX, mouseY);
+                }
+            }
+        }
     }
 
     @Override
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         mouseY += scroll;
 
-        for(CompendiumComponent component : this.components) {
-            if(component.y < mouseY
-                    && component.y + component.getHeight() > mouseY
-                    && component.x < mouseX) {
-                component.mouseClicked(mouseX, mouseY, mouseButton);
-            }
+        for(ClickableComponent component : clickableComponents) {
+            if(component.onClick(mouseX, mouseY, mouseButton))
+                return;
         }
     }
 
@@ -158,6 +167,10 @@ public class CompendiumEntry implements ICompendiumPage {
         }
 
         return Constants.UNTITLED;
+    }
+
+    public void addClickComponent(ClickableComponent component) {
+        clickableComponents.add(component);
     }
 
 }

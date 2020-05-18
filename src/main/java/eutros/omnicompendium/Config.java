@@ -1,5 +1,7 @@
 package eutros.omnicompendium;
 
+import eutros.omnicompendium.gui.entry.CompendiumEntries;
+import eutros.omnicompendium.loader.GitLoader;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
@@ -31,6 +33,10 @@ public class Config {
         branch = config.getString(propertyName, categoryName, "HEAD", "The branch of the repository to use.");
 
         config.save();
+
+        GitLoader.syncRepo();
+
+        CompendiumEntries.setLinkChecker(url, GitLoader.branch);
     }
 
     public static void registerConfig(FMLPreInitializationEvent evt) {

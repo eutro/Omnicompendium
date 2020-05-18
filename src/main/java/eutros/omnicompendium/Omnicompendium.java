@@ -1,7 +1,6 @@
 package eutros.omnicompendium;
 
 import eutros.omnicompendium.item.ModItems;
-import eutros.omnicompendium.loader.GitLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -27,8 +26,6 @@ public class Omnicompendium {
             return;
         }
         Config.registerConfig(evt);
-
-        GitLoader.syncRepo();
     }
 
 }

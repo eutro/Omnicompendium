@@ -1,5 +1,9 @@
-package eutros.omnicompendium.loader;
+package eutros.omnicompendium.helper;
 
+import eutros.omnicompendium.loader.GitLoader;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -9,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BookLoader {
+public class FileHelper {
 
     public static List<File> getEntries() {
         try {
@@ -21,6 +25,18 @@ public class BookLoader {
         } catch(IOException e) {
             return Collections.emptyList();
         }
+    }
+
+    @Nonnull
+    public static File getRelative(@Nullable File source, String relativePath) {
+        String parent = null;
+        if(source != null) {
+            parent = source.getParent();
+        }
+        if(parent == null) {
+            parent = GitLoader.DIR.getPath();
+        }
+        return new File(parent, relativePath);
     }
 
 }
