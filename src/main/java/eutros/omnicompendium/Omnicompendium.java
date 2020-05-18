@@ -1,5 +1,6 @@
 package eutros.omnicompendium;
 
+import eutros.omnicompendium.config.OmCConfig;
 import eutros.omnicompendium.item.ModItems;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -9,7 +10,8 @@ import org.apache.logging.log4j.Logger;
 
 @Mod(modid = Omnicompendium.MOD_ID,
      name = Omnicompendium.NAME,
-     version = Omnicompendium.VERSION)
+     version = Omnicompendium.VERSION,
+     guiFactory = "eutros.omnicompendium.config.GuiFactory")
 public class Omnicompendium {
 
     public static final Logger LOGGER = LogManager.getLogger();
@@ -25,7 +27,7 @@ public class Omnicompendium {
         if(evt.getSide().isServer()) {
             return;
         }
-        Config.registerConfig(evt);
+        OmCConfig.registerConfig(evt);
     }
 
 }

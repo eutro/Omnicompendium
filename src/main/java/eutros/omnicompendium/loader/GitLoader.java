@@ -1,6 +1,6 @@
 package eutros.omnicompendium.loader;
 
-import eutros.omnicompendium.Config;
+import eutros.omnicompendium.config.OmCConfig;
 import eutros.omnicompendium.Omnicompendium;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.io.FileUtils;
@@ -21,7 +21,7 @@ public class GitLoader {
 
     public static final File DIR = new File(Minecraft.getMinecraft().gameDir, "Omnicompendium");
     public static File configFile = new File(DIR, "_config.txt");
-    public static String branch = Config.branch;
+    public static String branch = OmCConfig.branch;
 
     public static void syncRepo() {
         Omnicompendium.LOGGER.info("Loading Omnicompendium.");
@@ -29,23 +29,23 @@ public class GitLoader {
             try {
                 List<String> lines;
                 lines = Files.readAllLines(configFile.toPath());
-                if(lines.isEmpty() || !lines.get(0).equals(Config.url)) {
+                if(lines.isEmpty() || !lines.get(0).equals(OmCConfig.url)) {
                     gitClone();
                     return;
                 }
 
                 Git git = Git.open(DIR);
                 Repository repo = git.getRepository();
-                if(!repo.getBranch().equals(Config.branch)) {
-                    Omnicompendium.LOGGER.info(String.format("Checking out branch: %s.", Config.branch));
+                if(!repo.getBranch().equals(OmCConfig.branch)) {
+                    Omnicompendium.LOGGER.info(String.format("Checking out branch: %s.", OmCConfig.branch));
                     git.checkout()
-                            .setName(Config.branch)
+                            .setName(OmCConfig.branch)
                             .setForced(true)
                             .call();
                 }
                 Omnicompendium.LOGGER.info("Pulling from origin.");
                 git.pull()
-                        .setRemoteBranchName(Config.branch)
+                        .setRemoteBranchName(OmCConfig.branch)
                         .setRebase(true)
                         .call();
                 branch = repo.getBranch();
@@ -63,11 +63,11 @@ public class GitLoader {
         FileUtils.cleanDirectory(DIR);
         CloneCommand clone = Git.cloneRepository();
         clone.setDirectory(DIR);
-        clone.setBranch(Config.branch);
-        clone.setURI(Config.url);
+        clone.setBranch(OmCConfig.branch);
+        clone.setURI(OmCConfig.url);
         Git git = clone.call();
         FileWriter writer = new FileWriter(configFile);
-        writer.write(Config.url);
+        writer.write(OmCConfig.url);
         writer.close();
         branch = git.getRepository().getBranch();
         git.close();

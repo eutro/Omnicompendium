@@ -1,13 +1,18 @@
-package eutros.omnicompendium;
+package eutros.omnicompendium.config;
 
+import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.loader.GitLoader;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.io.File;
 
-public class Config {
+@Mod.EventBusSubscriber(modid = Omnicompendium.MOD_ID)
+public class OmCConfig {
 
     public static Configuration config;
     public static String url;
@@ -44,6 +49,13 @@ public class Config {
         //noinspection ResultOfMethodCallIgnored
         dir.mkdirs();
         init(new File(dir, Omnicompendium.MOD_ID + ".cfg"));
+    }
+
+    @SubscribeEvent
+    public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent evt) {
+        if(evt.getModID().equals(Omnicompendium.MOD_ID)) {
+            refresh();
+        }
     }
 
 }
