@@ -4,10 +4,8 @@ import net.minecraft.client.Minecraft;
 
 public class BlankComponent extends CompendiumComponent {
 
-    private static BlankComponent INSTANCE = new BlankComponent();
-
-    private BlankComponent() {
-        super(0, 0);
+    public BlankComponent(int x, int y) {
+        super(x, y);
     }
 
     @Override
@@ -21,10 +19,6 @@ public class BlankComponent extends CompendiumComponent {
     @Override
     public int getHeight() {
         return Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT;
-    }
-
-    public static BlankComponent getInstance() {
-        return INSTANCE;
     }
 
     @Override

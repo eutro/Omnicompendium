@@ -57,11 +57,7 @@ public class GuiCompendium extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
-
         int i = getGuiOffsetX();
-        Point mouse = new Point(mouseX - i, mouseY - TOP_OFFSET);
-        Point entryListMouse = transmuteEntryListMouse(mouse);
-        Point entryMouse = transmuteEntryMouse(mouse);
 
         {
             GlStateManager.pushMatrix();
@@ -85,12 +81,16 @@ public class GuiCompendium extends GuiScreen {
 
             {
                 GlStateManager.pushMatrix();
-                drawEntry(entryMouse);
+                drawEntry();
                 GlStateManager.popMatrix();
             }
 
             GlStateManager.popMatrix();
         }
+
+        Point mouse = new Point(mouseX - i, mouseY - TOP_OFFSET);
+        Point entryListMouse = transmuteEntryListMouse(mouse);
+        Point entryMouse = transmuteEntryMouse(mouse);
 
         List<String> tooltip = entry.getTooltip(entryMouse.x, entryMouse.y);
 
@@ -121,9 +121,9 @@ public class GuiCompendium extends GuiScreen {
         entryList.draw(entry, this);
     }
 
-    private void drawEntry(Point mouse) {
+    private void drawEntry() {
         GlStateManager.translate(ENTRY_X, ENTRY_Y, 0);
-        entry.draw(mouse.x, mouse.y);
+        entry.draw();
     }
 
     @Override
@@ -163,7 +163,8 @@ public class GuiCompendium extends GuiScreen {
             if(entryList.handleMouseInput(mouseY - ENTRY_LIST_Y, this)) return;
         }
 
-        entry.handleMouseInput();
+        Point mouse = transmuteEntryMouse(new Point(mouseX, mouseY));
+        entry.handleMouseInput(mouse.y);
     }
 
 }

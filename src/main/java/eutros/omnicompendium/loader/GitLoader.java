@@ -24,6 +24,7 @@ public class GitLoader {
     public static String branch = Config.branch;
 
     public static void syncRepo() {
+        Omnicompendium.LOGGER.info("Loading Omnicompendium.");
         try {
             try {
                 List<String> lines;
@@ -36,12 +37,16 @@ public class GitLoader {
                 Git git = Git.open(DIR);
                 Repository repo = git.getRepository();
                 if(!repo.getBranch().equals(Config.branch)) {
+                    Omnicompendium.LOGGER.info(String.format("Checking out branch: %s.", Config.branch));
                     git.checkout()
                             .setName(Config.branch)
+                            .setForced(true)
                             .call();
                 }
+                Omnicompendium.LOGGER.info("Pulling from origin.");
                 git.pull()
                         .setRemoteBranchName(Config.branch)
+                        .setRebase(true)
                         .call();
                 branch = repo.getBranch();
                 git.close();
@@ -54,6 +59,7 @@ public class GitLoader {
     }
 
     public static void gitClone() throws GitAPIException, IOException {
+        Omnicompendium.LOGGER.info("Cloning repository.");
         FileUtils.cleanDirectory(DIR);
         CloneCommand clone = Git.cloneRepository();
         clone.setDirectory(DIR);

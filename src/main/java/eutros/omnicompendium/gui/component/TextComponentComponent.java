@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
+import eutros.omnicompendium.gui.entry.Constants;
 import eutros.omnicompendium.helper.ClickHelper;
 import eutros.omnicompendium.helper.ClickHelper.ClickableComponent;
 import eutros.omnicompendium.helper.FileHelper;
@@ -73,7 +74,7 @@ public class TextComponentComponent extends CompendiumComponent {
                 if(link != null) {
                     entry.addClickComponent(ClickableComponent.bySize(
                             0,
-                            startHeight + ret.size() * fr.FONT_HEIGHT,
+                            startHeight + ret.size() * (fr.FONT_HEIGHT + Constants.LINE_GAP),
                             fr.getStringWidth(builder.toString()),
                             fr.FONT_HEIGHT)
                             .withCallback(openLink(link, entry))
@@ -86,7 +87,7 @@ public class TextComponentComponent extends CompendiumComponent {
                 if(link != null) {
                     entry.addClickComponent(ClickableComponent.bySize(
                             fr.getStringWidth(builder.toString()),
-                            startHeight + ret.size() * fr.FONT_HEIGHT,
+                            startHeight + ret.size() * (fr.FONT_HEIGHT + Constants.LINE_GAP),
                             fr.getStringWidth(word),
                             fr.FONT_HEIGHT)
                             .withCallback(openLink(link, entry))

@@ -4,7 +4,7 @@ import net.minecraft.client.resources.I18n;
 
 import java.util.regex.Pattern;
 
-class Constants {
+public class Constants {
 
     /**
      * @link https://github.com/FTBTeam/FTB-Guides/blob/6e6683bfe5466d441bd4dbfcadd17f5e5e2454a1/src/main/java/com/feed_the_beast/mods/ftbguides/gui/components/ComponentPage.java#L23-L36

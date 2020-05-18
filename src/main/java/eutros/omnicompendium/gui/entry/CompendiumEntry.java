@@ -2,9 +2,12 @@ package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.component.*;
+import eutros.omnicompendium.helper.ClickHelper;
 import eutros.omnicompendium.helper.ClickHelper.ClickableComponent;
 import eutros.omnicompendium.helper.TextComponentParser;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
@@ -16,6 +19,7 @@ import java.util.regex.Matcher;
 
 public class CompendiumEntry {
 
+    public static final int SCROLL_BAR_WIDTH = 10;
     private String markdown;
     private List<CompendiumComponent> components;
     private int constructionY;
@@ -26,6 +30,7 @@ public class CompendiumEntry {
     private int scroll = 0;
 
     private List<ClickableComponent> clickableComponents = new ArrayList<>();
+    private boolean scrollBarClicked = false;
 
     public CompendiumEntry(String markdown) {
         this.markdown = Constants.COMMENT_PATTERN.matcher(markdown).replaceAll("");
@@ -40,7 +45,7 @@ public class CompendiumEntry {
             s = s.trim();
 
             if(s.isEmpty()) {
-                addComponent(BlankComponent.getInstance());
+                addComponent(new BlankComponent(0, constructionY));
                 continue;
             }
 
@@ -79,7 +84,7 @@ public class CompendiumEntry {
 
             if(matcher.find()) {
                 // TODO image components
-                addComponent(BlankComponent.getInstance());
+                addComponent(new BlankComponent(0, constructionY));
                 continue;
             }
 
@@ -97,23 +102,48 @@ public class CompendiumEntry {
         components.add(component);
     }
 
-    public void draw(int mouseX, int mouseY) {
+    public void draw() {
+        GlStateManager.pushMatrix();
         GlStateManager.translate(0, -scroll, 0);
         GlStateManager.enableBlend();
         GlStateManager.disableLighting();
-        for(CompendiumComponent component : components) {
-            component.draw();
-        }
+        components.stream()
+                .filter(component -> component.y + component.getHeight() >= scroll)
+                .filter(component -> component.y <= scroll + GuiCompendium.ENTRY_HEIGHT)
+                .forEach(CompendiumComponent::draw);
         GlStateManager.enableLighting();
         GlStateManager.disableBlend();
+        GlStateManager.popMatrix();
+
+        CompendiumComponent lastComponent = components.get(components.size() - 1);
+        float maxScroll = Math.max((float) lastComponent.y + lastComponent.getHeight(), GuiCompendium.ENTRY_HEIGHT);
+        float scrollPct = scroll / maxScroll;
+
+        int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT * GuiCompendium.ENTRY_HEIGHT / maxScroll);
+        int scrollHeight = (int) ((GuiCompendium.ENTRY_HEIGHT - 2) * scrollPct);
+
+        GuiUtils.drawGradientRect(0,
+                GuiCompendium.ENTRY_WIDTH + 2,
+                scrollHeight,
+                GuiCompendium.ENTRY_WIDTH + SCROLL_BAR_WIDTH,
+                scrollHeight + barHeight,
+                0xAAAAAA0,
+                0x888888);
     }
 
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        mouseY += scroll;
-
         for(ClickableComponent component : clickableComponents) {
-            if(component.onClick(mouseX, mouseY, mouseButton))
+            if(component.onClick(mouseX, mouseY + scroll, mouseButton))
                 return;
+        }
+
+        if(mouseButton == 0) {
+            scrollBarClicked = ClickHelper.isClicked(GuiCompendium.ENTRY_WIDTH,
+                    0,
+                    SCROLL_BAR_WIDTH,
+                    GuiCompendium.ENTRY_HEIGHT,
+                    mouseX,
+                    mouseY);
         }
     }
 
@@ -128,8 +158,29 @@ public class CompendiumEntry {
 
     public static final double SCROLL_SENSITIVITY = 0.1;
 
-    public void handleMouseInput() {
-        scroll = (int) Math.max(0, scroll - Mouse.getDWheel() * SCROLL_SENSITIVITY);
+    public void handleMouseInput(int mouseY) {
+        int maxScroll = getMaxScroll();
+        int scroll = this.scroll - (int) (Mouse.getDWheel() * SCROLL_SENSITIVITY);
+
+        if(scrollBarClicked) {
+            if(Mouse.isButtonDown(0)) {
+                float scrollPct = mouseY / (float) GuiCompendium.ENTRY_HEIGHT;
+                scroll = (int) (maxScroll * scrollPct);
+            } else {
+                scrollBarClicked = false;
+            }
+        }
+
+        this.scroll = MathHelper.clamp(
+                scroll,
+                0,
+                maxScroll
+        );
+    }
+
+    private int getMaxScroll() {
+        CompendiumComponent lastComponent = components.get(components.size() - 1);
+        return Math.max(0, lastComponent.y + lastComponent.getHeight() - GuiCompendium.ENTRY_HEIGHT);
     }
 
     @Nullable
