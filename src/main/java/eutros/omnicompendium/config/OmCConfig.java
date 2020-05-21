@@ -39,9 +39,10 @@ public class OmCConfig {
 
         config.save();
 
-        GitLoader.syncRepo();
-
-        CompendiumEntries.setLinkChecker(url, GitLoader.branch);
+        new Thread(() -> {
+            GitLoader.syncRepo();
+            CompendiumEntries.setLinkChecker(url, GitLoader.branch);
+        }).start();
     }
 
     public static void registerConfig(FMLPreInitializationEvent evt) {
