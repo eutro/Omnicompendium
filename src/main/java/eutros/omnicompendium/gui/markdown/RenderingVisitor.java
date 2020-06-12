@@ -50,6 +50,8 @@ public class RenderingVisitor extends AbstractVisitor {
             return; // okay
         }
 
+        // FIXME: whitespace aaaa
+
         if(x != 0 && width - x < mc.fontRenderer.getStringWidth(firstWord[0])) {
             x = 0;
             y += mc.fontRenderer.FONT_HEIGHT;
@@ -93,13 +95,17 @@ public class RenderingVisitor extends AbstractVisitor {
             Gui.drawRect(baseX + x,
                     y,
                     baseX + x + MonoRenderer.getStringWidth(literal),
-                    y + mc.fontRenderer.FONT_HEIGHT,
+                    y + mc.fontRenderer.FONT_HEIGHT - 1,
                     CODE_BLOCK_BG_COLOR);
             MonoRenderer.drawString(literal, baseX + x, y, CODE_COLOR);
             x += MonoRenderer.getStringWidth(literal);
         } else {
             String first = literal.substring(0, i);
-            Gui.drawRect(baseX + x, y, baseX + x + width, y + mc.fontRenderer.FONT_HEIGHT - 1, CODE_BLOCK_BG_COLOR);
+            Gui.drawRect(baseX + x,
+                    y,
+                    baseX + width,
+                    y + mc.fontRenderer.FONT_HEIGHT - 1,
+                    CODE_BLOCK_BG_COLOR);
             MonoRenderer.drawString(first, baseX + x, y, CODE_COLOR);
 
             char c0 = literal.charAt(i);
@@ -110,14 +116,22 @@ public class RenderingVisitor extends AbstractVisitor {
             if(strings.size() > 1) {
                 for(String s : strings.subList(0, strings.size() - 1)) {
                     y += mc.fontRenderer.FONT_HEIGHT;
-                    Gui.drawRect(baseX, y, GuiCompendium.ENTRY_WIDTH, y + mc.fontRenderer.FONT_HEIGHT - 1, CODE_BLOCK_BG_COLOR);
+                    Gui.drawRect(baseX,
+                            y,
+                            baseX + width,
+                            y + mc.fontRenderer.FONT_HEIGHT - 1,
+                            CODE_BLOCK_BG_COLOR);
                     MonoRenderer.drawString(s, baseX, y, CODE_COLOR);
                 }
             }
 
             y += mc.fontRenderer.FONT_HEIGHT;
             String lastString = strings.get(strings.size() - 1);
-            Gui.drawRect(baseX, y, baseX + x + MonoRenderer.getStringWidth(lastString), y + mc.fontRenderer.FONT_HEIGHT, CODE_BLOCK_BG_COLOR);
+            Gui.drawRect(baseX,
+                    y,
+                    baseX + MonoRenderer.getStringWidth(lastString),
+                    y + mc.fontRenderer.FONT_HEIGHT - 1,
+                    CODE_BLOCK_BG_COLOR);
             MonoRenderer.drawString(lastString, baseX, y, CODE_COLOR);
             x += MonoRenderer.getStringWidth(lastString);
         }
@@ -225,7 +239,9 @@ public class RenderingVisitor extends AbstractVisitor {
     @Override
     public void visit(Image image) {
         // FIXME: oh boy
+        lineBreak(image);
         visitChildren(image);
+        lineBreak(image);
     }
 
     @Override
