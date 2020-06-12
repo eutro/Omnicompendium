@@ -32,7 +32,7 @@ public class CompendiumEntries {
 
     public static Pattern linkChecker;
 
-    public static void setLinkChecker(String url, String branch) {
+    public static void setLinkChecker(String url) {
         linkChecker = Pattern.compile("(" +
                 serializeRegex(url) +
                 "/blob/.+?/)?(?<relative>([a-zA-Z_\\-\\s0-9.]+)\\.md)$");

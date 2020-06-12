@@ -25,8 +25,8 @@ public class GuiCompendium extends GuiScreen {
 
     public static final int TEX_SIZE = 256;
 
-    public static final int TOP_OFFSET = 2;
     public static final double GUI_SCALE = 2;
+    public static final int GUI_Y = 2;
 
     public static final int ENTRY_WIDTH = (int) (198 * GUI_SCALE);
     public static final int ENTRY_HEIGHT = (int) (116 * GUI_SCALE);
@@ -41,6 +41,10 @@ public class GuiCompendium extends GuiScreen {
 
     private CompendiumEntry entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
 
+    public int getGuiX() {
+        return (int) ((width - TEX_SIZE * GUI_SCALE) / 2);
+    }
+
     public GuiCompendium() {
         super();
         this.setGuiSize(TEX_SIZE, TEX_SIZE);
@@ -49,7 +53,7 @@ public class GuiCompendium extends GuiScreen {
                 .map(CompendiumEntries::fromSource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted(Comparator.comparing(eutros.omnicompendium.gui.entry.CompendiumEntry::getTitle))
+                .sorted(Comparator.comparing(CompendiumEntry::getTitle))
                 .collect(Collectors.toList()));
     }
 
@@ -57,12 +61,12 @@ public class GuiCompendium extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
-        int i = getGuiOffsetX();
+        int i = getGuiX();
 
         {
             GlStateManager.pushMatrix();
 
-            GlStateManager.translate(i, TOP_OFFSET, 0);
+            GlStateManager.translate(i, GUI_Y, 0);
             {
                 GlStateManager.pushMatrix();
 
@@ -88,7 +92,7 @@ public class GuiCompendium extends GuiScreen {
             GlStateManager.popMatrix();
         }
 
-        Point mouse = new Point(mouseX - i, mouseY - TOP_OFFSET);
+        Point mouse = new Point(mouseX - i, mouseY - GUI_Y);
         Point entryListMouse = transmuteEntryListMouse(mouse);
         Point entryMouse = transmuteEntryMouse(mouse);
 
@@ -112,10 +116,6 @@ public class GuiCompendium extends GuiScreen {
         return new Point(mouse.x, mouse.y - ENTRY_LIST_Y);
     }
 
-    private int getGuiOffsetX() {
-        return (int) ((this.width - TEX_SIZE * GUI_SCALE) / 2);
-    }
-
     private void drawEntryList() {
         GlStateManager.translate(0, ENTRY_LIST_Y, 0);
         entryList.draw(entry, this);
@@ -128,10 +128,10 @@ public class GuiCompendium extends GuiScreen {
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        mouseX -= getGuiOffsetX();
+        mouseX -= getGuiX();
         mouseX -= ENTRY_X;
 
-        mouseY -= TOP_OFFSET;
+        mouseY -= GUI_Y;
         mouseY -= ENTRY_Y;
 
         if(mouseX < 0 || mouseY < 0)
@@ -151,10 +151,10 @@ public class GuiCompendium extends GuiScreen {
         super.handleMouseInput();
 
         int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-        mouseX -= getGuiOffsetX();
+        mouseX -= getGuiX();
 
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-        mouseY -= TOP_OFFSET;
+        mouseY -= GUI_Y;
 
         if(mouseX > 0 &&
                 mouseX < ENTRY_LIST_WIDTH &&

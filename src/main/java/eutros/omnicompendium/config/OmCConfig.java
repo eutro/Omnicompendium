@@ -41,7 +41,7 @@ public class OmCConfig {
 
         new Thread(() -> {
             GitLoader.syncRepo();
-            CompendiumEntries.setLinkChecker(url, GitLoader.branch);
+            CompendiumEntries.setLinkChecker(url);
         }).start();
     }
 
