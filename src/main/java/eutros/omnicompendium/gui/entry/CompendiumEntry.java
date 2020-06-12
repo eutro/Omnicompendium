@@ -3,8 +3,8 @@ package eutros.omnicompendium.gui.entry;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.markdown.RenderingVisitor;
 import eutros.omnicompendium.helper.ClickHelper;
+import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.RenderHelper;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.client.config.GuiUtils;
@@ -17,9 +17,15 @@ import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class CompendiumEntry {
 
@@ -28,8 +34,11 @@ public class CompendiumEntry {
     protected GuiCompendium compendium;
 
     @Nullable
+    public List<ClickHelper.ClickableComponent> clickableComponents = null;
+
+    @Nullable
     public File source;
-    private int scroll = 0;
+    public int scroll = 0;
 
     private boolean scrollBarClicked = false;
 
@@ -52,6 +61,10 @@ public class CompendiumEntry {
                 GuiCompendium.ENTRY_HEIGHT
         );
 
+        if(clickableComponents == null) {
+            clickableComponents = new ArrayList<>();
+            RenderingVisitor.INSTANCE.entry = this;
+        }
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, -scroll, 0);
         node.accept(RenderingVisitor.INSTANCE);
@@ -59,7 +72,7 @@ public class CompendiumEntry {
 
         RenderHelper.resetCamera();
 
-        float maxScroll = Math.max(RenderingVisitor.INSTANCE.y + Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT, GuiCompendium.ENTRY_HEIGHT);
+        float maxScroll = Math.max(RenderingVisitor.INSTANCE.y, GuiCompendium.ENTRY_HEIGHT);
         float scrollPct = scroll / maxScroll;
 
         int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT * GuiCompendium.ENTRY_HEIGHT / maxScroll);
@@ -75,7 +88,12 @@ public class CompendiumEntry {
     }
 
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        // FIXME: component clicks
+        if(clickableComponents != null) {
+            for(ClickHelper.ClickableComponent component : clickableComponents) {
+                if(component.onClick(mouseX, mouseY + scroll, mouseButton))
+                    return;
+            }
+        }
 
         if(mouseButton == 0) {
             scrollBarClicked = ClickHelper.isClicked(GuiCompendium.ENTRY_WIDTH,
@@ -124,7 +142,18 @@ public class CompendiumEntry {
 
     @Nullable
     public List<String> getTooltip(int mouseX, int mouseY) {
-        // FIXME re-implement tooltips
+        if(clickableComponents != null) {
+            mouseY += scroll;
+            for(ClickHelper.ClickableComponent component : clickableComponents) {
+                if(component.isHovered(mouseX, mouseY)) {
+                    List<String> tooltip = component.getTooltip();
+                    if(tooltip != null) {
+                        return tooltip;
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
@@ -136,6 +165,53 @@ public class CompendiumEntry {
     public String getTitle() {
         // FIXME: re-implement titles
         return Constants.UNTITLED;
+    }
+
+    public LinkFunction linkFunction(String destination) {
+        return new LinkFunction(destination);
+    }
+
+    public class LinkFunction implements ClickHelper.ClickFunction {
+
+        private final String link;
+
+        public LinkFunction(String link) {
+            this.link = link;
+        }
+
+        @Override
+        public boolean click(int mouseX, int mouseY, int mouseButton) {
+            Optional<CompendiumEntry> linkedEntry = CompendiumEntries.fromLink(link, source);
+            GuiCompendium gui = getCompendium();
+            if(linkedEntry.isPresent()) {
+                gui.setEntry(linkedEntry.get());
+                return true;
+            } else {
+                try {
+                    if(Desktop.isDesktopSupported()) {
+                        Desktop desktop = Desktop.getDesktop();
+                        if(link.startsWith("http")) {
+                            URI uri = new URI(link);
+                            if(desktop.isSupported(Desktop.Action.BROWSE)) {
+                                desktop.browse(uri);
+                                return true;
+                            }
+                        } else {
+                            File file = FileHelper.getRelative(source, link);
+                            File parent = file.getParentFile();
+                            if(parent != null
+                                    && desktop.isSupported(Desktop.Action.OPEN)) {
+                                desktop.open(parent);
+                            }
+                        }
+                    }
+                } catch(NoClassDefFoundError | IOException | URISyntaxException ignored) {
+                    // *shrug*
+                }
+            }
+            return false;
+        }
+
     }
 
 }

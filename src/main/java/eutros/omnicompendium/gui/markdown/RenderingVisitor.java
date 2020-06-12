@@ -1,16 +1,23 @@
 package eutros.omnicompendium.gui.markdown;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eutros.omnicompendium.gui.GuiCompendium;
+import eutros.omnicompendium.gui.entry.CompendiumEntry;
+import eutros.omnicompendium.helper.ClickHelper;
+import eutros.omnicompendium.helper.TextHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import org.commonmark.ext.gfm.strikethrough.Strikethrough;
 import org.commonmark.ext.gfm.tables.TableRow;
 import org.commonmark.node.*;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -18,10 +25,14 @@ public class RenderingVisitor extends AbstractVisitor {
 
     public static final RenderingVisitor INSTANCE = new RenderingVisitor();
 
+    @Nullable
+    public CompendiumEntry entry = null;
+
     public static final int CODE_COLOR = 0xFF000000;
     public static final int CODE_BLOCK_BG_COLOR = 0xFFDDDDDD;
     public static final TextFormatting DEFAULT_COLOUR = TextFormatting.BLACK;
     private final Minecraft mc = Minecraft.getMinecraft();
+    private int fontHeight; // used for setting callback because funny headings
     private int baseX;
     private int width;
     private int x;
@@ -35,6 +46,7 @@ public class RenderingVisitor extends AbstractVisitor {
     }
 
     public void reset() {
+        fontHeight = mc.fontRenderer.FONT_HEIGHT;
         y = 0;
         x = 0;
         marker = null;
@@ -48,6 +60,7 @@ public class RenderingVisitor extends AbstractVisitor {
     public void visit(Document document) {
         reset();
         visitChildren(document);
+        entry = null;
     }
 
     private void drawText(String text) {
@@ -60,18 +73,25 @@ public class RenderingVisitor extends AbstractVisitor {
             x = 0;
             y += mc.fontRenderer.FONT_HEIGHT;
         }
-        List<String> strings = mc.fontRenderer.listFormattedStringToWidth(style.getFormattingCode() + text, width - x);
-        mc.fontRenderer.drawString(strings.get(0).trim(), baseX + x, y, 0xFF000000);
-        if(strings.size() == 1) {
-            x += mc.fontRenderer.getStringWidth(strings.get(0));
+        String str = style.getFormattingCode() + text;
+
+        int i = TextHelper.trimStringToWidth(str, width - x);
+
+        String firstLine = str.substring(0, i);
+
+        mc.fontRenderer.drawString(firstLine.trim(), baseX + x, y, 0xFF000000);
+        if(str.length() <= i) {
+            x += mc.fontRenderer.getStringWidth(firstLine);
             return;
         }
 
-        text = text.substring(strings.get(0).length() - style.getFormattingCode().length());
-        text = style.getFormattingCode() + text.replaceFirst("^\\s+", "");
+        char c0 = str.charAt(i);
+        boolean flag = c0 == ' ' || c0 == '\n';
+        text = str.substring(i + (flag ? 1 : 0));
+        text = style.getFormattingCode() + text;
 
         y += mc.fontRenderer.FONT_HEIGHT;
-        strings = mc.fontRenderer.listFormattedStringToWidth(text, width);
+        List<String> strings = mc.fontRenderer.listFormattedStringToWidth(text, width);
 
         for(String s : strings.subList(0, strings.size() - 1)) {
             mc.fontRenderer.drawString(s, baseX, y, 0xFF000000);
@@ -175,8 +195,19 @@ public class RenderingVisitor extends AbstractVisitor {
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
-        // TODO: show info
-        drawCodeBlock(fencedCodeBlock.getLiteral());
+        int[] rect = drawCodeBlock(fencedCodeBlock.getLiteral());
+        String info = fencedCodeBlock.getInfo();
+        if(entry != null && entry.clickableComponents != null && info != null) {
+            entry.clickableComponents.add(
+                    ClickHelper.ClickableComponent.byBounds(
+                            rect[0],
+                            rect[1],
+                            rect[2],
+                            rect[3]
+                    )
+                            .withTooltip(Collections.singletonList(info))
+            );
+        }
         lineBreak(fencedCodeBlock);
     }
 
@@ -186,7 +217,7 @@ public class RenderingVisitor extends AbstractVisitor {
         lineBreak(indentedCodeBlock);
     }
 
-    private void drawCodeBlock(String literal) {
+    private int[] drawCodeBlock(String literal) {
         final int padding = 5;
 
         baseX += padding;
@@ -196,7 +227,21 @@ public class RenderingVisitor extends AbstractVisitor {
 
         List<String> strings = MonoRenderer.listFormattedStringToWidth(literal, width);
         int height = strings.size() * mc.fontRenderer.FONT_HEIGHT;
-        Gui.drawRect(baseX - padding, y - padding, oldWidth, y + height + padding, CODE_BLOCK_BG_COLOR);
+
+        int[] rect = {
+                baseX - padding,
+                y - padding,
+                oldWidth,
+                y + height + padding,
+        };
+
+        Gui.drawRect(
+                rect[0],
+                rect[1],
+                rect[2],
+                rect[3],
+                CODE_BLOCK_BG_COLOR
+        );
 
         for(String string : strings) {
             MonoRenderer.drawString(string, baseX, y, 0xFF000000);
@@ -206,6 +251,8 @@ public class RenderingVisitor extends AbstractVisitor {
         width = oldWidth;
         y += padding;
         baseX -= padding;
+
+        return rect;
     }
 
     @Override
@@ -230,11 +277,16 @@ public class RenderingVisitor extends AbstractVisitor {
         width = (int) (width / scale);
         int oldY = y;
 
+        int oldHeight = fontHeight;
+        fontHeight = (int) (fontHeight * scale);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, -y * (scale - 1), 0);
         GlStateManager.scale(scale, scale, 1);
         visitChildren(heading);
         GlStateManager.popMatrix();
+
+        fontHeight = oldHeight;
 
         this.width = oldWidth;
         y = oldY + (int) ((y - oldY + mc.fontRenderer.FONT_HEIGHT) * scale);
@@ -267,12 +319,82 @@ public class RenderingVisitor extends AbstractVisitor {
         lineBreak(image);
     }
 
+    private static ImmutableList<String> linkTooltip(@Nullable String title, String link) {
+        ImmutableList.Builder<String> builder = ImmutableList.builder();
+
+        if(title != null) builder.add(TextFormatting.DARK_GRAY + title);
+        builder.add(
+                TextFormatting.BLUE + link,
+                TextFormatting.GRAY + "" + TextFormatting.ITALIC + I18n.format("omnicompendium.component.link_click")
+        );
+
+        return builder.build();
+    }
+
     @Override
     public void visit(Link link) {
-        // FIXME: link clicky
+        int startY = y;
+        int startX = x;
+
         style.setColor(TextFormatting.BLUE);
         visitChildren(link);
         style.setColor(DEFAULT_COLOUR);
+
+        if(entry != null && entry.clickableComponents != null) {
+
+            String title = link.getTitle();
+            String destination = link.getDestination();
+            List<String> tooltip = linkTooltip(title, destination);
+
+            CompendiumEntry.LinkFunction func = entry.linkFunction(destination);
+
+            if(startY != y) {
+                entry.clickableComponents.add(
+                        ClickHelper.ClickableComponent.bySize(
+                                baseX + startX,
+                                startY,
+                                width - startX,
+                                fontHeight
+                        )
+                                .withTooltip(tooltip)
+                                .withCallback(func)
+                );
+                int deltaY = y - startY;
+                if(deltaY != fontHeight) {
+                    entry.clickableComponents.add(
+                            ClickHelper.ClickableComponent.bySize(
+                                    baseX,
+                                    startY + fontHeight,
+                                    width,
+                                    deltaY - fontHeight
+                            )
+                                    .withTooltip(tooltip)
+                                    .withCallback(func)
+                    );
+                }
+                entry.clickableComponents.add(
+                        ClickHelper.ClickableComponent.bySize(
+                                baseX,
+                                y,
+                                x,
+                                fontHeight
+                        )
+                                .withTooltip(tooltip)
+                                .withCallback(func)
+                );
+            } else {
+                entry.clickableComponents.add(
+                        ClickHelper.ClickableComponent.bySize(
+                                baseX + startX,
+                                y,
+                                x - startX,
+                                fontHeight
+                        )
+                                .withTooltip(tooltip)
+                                .withCallback(func)
+                );
+            }
+        }
     }
 
     @Override
