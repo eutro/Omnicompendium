@@ -25,7 +25,6 @@ public class CompendiumEntry {
 
     public static final int SCROLL_BAR_WIDTH = 10;
     private final Node node;
-    private final RenderingVisitor visitor;
     protected GuiCompendium compendium;
 
     @Nullable
@@ -43,7 +42,6 @@ public class CompendiumEntry {
                 .build();
 
         node = parser.parse(markdown);
-        visitor = new RenderingVisitor();
     }
 
     public void draw() {
@@ -56,12 +54,12 @@ public class CompendiumEntry {
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, -scroll, 0);
-        node.accept(visitor.reset());
+        node.accept(RenderingVisitor.INSTANCE);
         GlStateManager.popMatrix();
 
         RenderHelper.resetCamera();
 
-        float maxScroll = Math.max(visitor.y + Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT, GuiCompendium.ENTRY_HEIGHT);
+        float maxScroll = Math.max(RenderingVisitor.INSTANCE.y + Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT, GuiCompendium.ENTRY_HEIGHT);
         float scrollPct = scroll / maxScroll;
 
         int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT * GuiCompendium.ENTRY_HEIGHT / maxScroll);
@@ -121,7 +119,7 @@ public class CompendiumEntry {
     }
 
     private int getMaxScroll() {
-        return Math.max(0, visitor.y - GuiCompendium.ENTRY_HEIGHT + 10);
+        return Math.max(0, RenderingVisitor.INSTANCE.y - GuiCompendium.ENTRY_HEIGHT + 10);
     }
 
     @Nullable

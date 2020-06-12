@@ -13,12 +13,13 @@ import org.commonmark.node.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class RenderingVisitor extends AbstractVisitor {
 
+    public static final RenderingVisitor INSTANCE = new RenderingVisitor();
+
     public static final int CODE_COLOR = 0xFF000000;
-    public static final int CODE_BLOCK_BG_COLOR = 0xFF777777;
+    public static final int CODE_BLOCK_BG_COLOR = 0xFFDDDDDD;
     public static final TextFormatting DEFAULT_COLOUR = TextFormatting.BLACK;
     private final Minecraft mc = Minecraft.getMinecraft();
     private int baseX;
@@ -29,11 +30,11 @@ public class RenderingVisitor extends AbstractVisitor {
     private Style style;
     private String marker;
 
-    public RenderingVisitor() {
+    private RenderingVisitor() {
         reset();
     }
 
-    public RenderingVisitor reset() {
+    public void reset() {
         y = 0;
         x = 0;
         marker = null;
@@ -41,16 +42,19 @@ public class RenderingVisitor extends AbstractVisitor {
         width = GuiCompendium.ENTRY_WIDTH;
         style = new Style();
         style.setColor(DEFAULT_COLOUR);
-        return this;
+    }
+
+    @Override
+    public void visit(Document document) {
+        reset();
+        visitChildren(document);
     }
 
     private void drawText(String text) {
-        String[] firstWord = text.split(" ", 1);
+        String[] firstWord = text.trim().split(" ", 2);
         if(firstWord.length == 0) {
             return; // okay
         }
-
-        // FIXME: whitespace aaaa
 
         if(x != 0 && width - x < mc.fontRenderer.getStringWidth(firstWord[0])) {
             x = 0;
@@ -78,11 +82,36 @@ public class RenderingVisitor extends AbstractVisitor {
         x = mc.fontRenderer.getStringWidth(lastString);
     }
 
+    private void lineBreak(Node node) {
+        finishLine();
+        if(node != null && node.getNext() != null) {
+            y += mc.fontRenderer.FONT_HEIGHT;
+        }
+    }
+
+    private void finishLine() {
+        if(x != 0) {
+            y += mc.fontRenderer.FONT_HEIGHT;
+            x = 0;
+        }
+    }
+
     @Override
     public void visit(BlockQuote blockQuote) {
-        style.setItalic(true);
+        int oldY = this.y;
+        baseX += 8;
+        style.setColor(TextFormatting.GRAY);
         visitChildren(blockQuote);
-        style.setItalic(false);
+        style.setColor(DEFAULT_COLOUR);
+        baseX -= 8;
+        finishLine();
+        Gui.drawRect(
+                0,
+                oldY - 1,
+                2,
+                y - 1,
+                0xFFAAAAAA
+        );
 
         lineBreak(blockQuote);
     }
@@ -139,56 +168,50 @@ public class RenderingVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Emphasis emphasis) {
-        boolean italic = emphasis.getClosingDelimiter().length() == 1;
-        Consumer<Boolean> set = italic ? style::setItalic : style::setBold;
-
-        set.accept(true);
+        style.setItalic(true);
         visitChildren(emphasis);
-        set.accept(false);
+        style.setItalic(false);
     }
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
-        String literal = fencedCodeBlock.getLiteral();
         // TODO: show info
+        drawCodeBlock(fencedCodeBlock.getLiteral());
+        lineBreak(fencedCodeBlock);
+    }
 
-        int wrapWidth = width - x;
+    @Override
+    public void visit(IndentedCodeBlock indentedCodeBlock) {
+        drawCodeBlock(indentedCodeBlock.getLiteral());
+        lineBreak(indentedCodeBlock);
+    }
 
-        List<String> strings = MonoRenderer.listFormattedStringToWidth(literal, wrapWidth);
+    private void drawCodeBlock(String literal) {
+        final int padding = 5;
+
+        baseX += padding;
+        int oldWidth = width;
+        width -= padding * 2;
+        y += padding;
+
+        List<String> strings = MonoRenderer.listFormattedStringToWidth(literal, width);
         int height = strings.size() * mc.fontRenderer.FONT_HEIGHT;
-        Gui.drawRect(baseX + x, y, GuiCompendium.ENTRY_WIDTH, y + height, CODE_BLOCK_BG_COLOR);
+        Gui.drawRect(baseX - padding, y - padding, oldWidth, y + height + padding, CODE_BLOCK_BG_COLOR);
 
         for(String string : strings) {
             MonoRenderer.drawString(string, baseX, y, 0xFF000000);
             y += mc.fontRenderer.FONT_HEIGHT;
         }
 
-        lineBreak(fencedCodeBlock);
+        width = oldWidth;
+        y += padding;
+        baseX -= padding;
     }
 
     @Override
     public void visit(Paragraph paragraph) {
         visitChildren(paragraph);
-        if(paragraph.getParent() == null || paragraph.getParent() instanceof Document) {
-            lineBreak(paragraph);
-        } else {
-            finishLine();
-        }
-    }
-
-    private void lineBreak(Node node) {
-        finishLine();
-        if(node != null && node.getNext() != null) {
-            y += mc.fontRenderer.FONT_HEIGHT;
-            x = 0;
-        }
-    }
-
-    private void finishLine() {
-        if(x != 0) {
-            y += mc.fontRenderer.FONT_HEIGHT;
-            x = 0;
-        }
+        lineBreak(paragraph);
     }
 
     @Override
@@ -258,11 +281,11 @@ public class RenderingVisitor extends AbstractVisitor {
         visitChildren(linkReferenceDefinition);
     }
 
-    public static final int LIST_INDENT = 20;
+    public static final int LIST_INDENT = 15;
 
     @Override
     public void visit(BulletList bulletList) {
-        marker = String.valueOf(bulletList.getBulletMarker());
+        marker = "\u2022";
         startList();
         visitChildren(bulletList);
         endList(bulletList);
@@ -309,15 +332,21 @@ public class RenderingVisitor extends AbstractVisitor {
     @Override
     public void visit(StrongEmphasis strongEmphasis) {
         style.setBold(true);
-        style.setItalic(true);
         visitChildren(strongEmphasis);
-        style.setItalic(false);
         style.setBold(false);
     }
 
     @Override
     public void visit(Text text) {
         drawText(text.getLiteral());
+    }
+
+    @Override
+    public void visit(SoftLineBreak softLineBreak) {
+        x += mc.fontRenderer.getStringWidth(" ");
+        if(x > width) {
+            finishLine();
+        }
     }
 
     private Map<Class<? extends CustomNode>, INodeVisitor<?>> customNodeMap =
