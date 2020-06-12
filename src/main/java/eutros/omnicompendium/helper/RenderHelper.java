@@ -23,7 +23,7 @@ public class RenderHelper {
         int windowX = (int) (x / scaledWidth * mc.displayWidth);
         int windowY = mc.displayHeight - (int) (y / scaledHeight * mc.displayHeight) - windowHeight;
 
-        //GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(windowX, windowY, windowWidth, windowHeight);
     }
 
