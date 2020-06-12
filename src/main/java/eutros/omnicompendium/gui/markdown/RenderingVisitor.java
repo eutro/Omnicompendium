@@ -333,7 +333,7 @@ public class RenderingVisitor extends AbstractVisitor {
                         Gui.drawRect(
                                 baseX,
                                 y,
-                                baseX + width + 1,
+                                baseX + width,
                                 y + 1,
                                 color
                         );
@@ -370,26 +370,31 @@ public class RenderingVisitor extends AbstractVisitor {
 
                         y = maxY;
                         baseX = oldBaseX;
+                        width = oldWidth;
                         x = 0;
 
-                        for(int i = 0; i < count + 1; i++) {
-                            int left = baseX + (oldWidth / count) * i;
+                        for(int i = 0; i < count; i++) {
+                            int left = (width / count) * i;
                             Gui.drawRect(
-                                    left,
+                                    baseX + left,
                                     startY,
-                                    left + 1,
+                                    baseX + left + 1,
                                     y,
                                     color
                             );
                         }
+                        Gui.drawRect(baseX + width,
+                                startY,
+                                baseX + width - 1,
+                                y,
+                                color);
 
-                        width = oldWidth;
 
                         if(tableRow.getNext() == null) {
                             Gui.drawRect(
                                     baseX,
                                     y,
-                                    baseX + width + 1,
+                                    baseX + width,
                                     y + 1,
                                     color
                             );
