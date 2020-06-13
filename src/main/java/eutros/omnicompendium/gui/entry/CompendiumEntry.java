@@ -2,7 +2,7 @@ package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.markdown.RenderingVisitor;
-import eutros.omnicompendium.helper.ClickHelper;
+import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.RenderHelper;
 import net.minecraft.client.renderer.GlStateManager;
@@ -34,7 +34,7 @@ public class CompendiumEntry {
     protected GuiCompendium compendium;
 
     @Nullable
-    public List<ClickHelper.ClickableComponent> clickableComponents = null;
+    public List<MouseHelper.ClickableComponent> clickableComponents = null;
 
     @Nullable
     public File source;
@@ -67,6 +67,7 @@ public class CompendiumEntry {
         }
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, -scroll, 0);
+        RenderingVisitor.INSTANCE.source = source;
         node.accept(RenderingVisitor.INSTANCE);
         GlStateManager.popMatrix();
 
@@ -89,14 +90,14 @@ public class CompendiumEntry {
 
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         if(clickableComponents != null) {
-            for(ClickHelper.ClickableComponent component : clickableComponents) {
+            for(MouseHelper.ClickableComponent component : clickableComponents) {
                 if(component.onClick(mouseX, mouseY + scroll, mouseButton))
                     return;
             }
         }
 
         if(mouseButton == 0) {
-            scrollBarClicked = ClickHelper.isClicked(GuiCompendium.ENTRY_WIDTH,
+            scrollBarClicked = MouseHelper.isClicked(GuiCompendium.ENTRY_WIDTH,
                     0,
                     SCROLL_BAR_WIDTH,
                     GuiCompendium.ENTRY_HEIGHT,
@@ -144,7 +145,7 @@ public class CompendiumEntry {
     public List<String> getTooltip(int mouseX, int mouseY) {
         if(clickableComponents != null) {
             mouseY += scroll;
-            for(ClickHelper.ClickableComponent component : clickableComponents) {
+            for(MouseHelper.ClickableComponent component : clickableComponents) {
                 if(component.isHovered(mouseX, mouseY)) {
                     List<String> tooltip = component.getTooltip();
                     if(tooltip != null) {
@@ -171,7 +172,7 @@ public class CompendiumEntry {
         return new LinkFunction(destination);
     }
 
-    public class LinkFunction implements ClickHelper.ClickFunction {
+    public class LinkFunction implements MouseHelper.ClickFunction {
 
         private final String link;
 

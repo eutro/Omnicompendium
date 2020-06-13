@@ -3,25 +3,9 @@ package eutros.omnicompendium.helper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 
-import static net.minecraft.client.gui.FontRenderer.getFormatFromString;
-
 public class TextHelper {
 
     private static FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
-
-    public static String wrapFormattedStringToWidth(String str, int wrapWidth) {
-        int i = trimStringToWidth(str, wrapWidth);
-
-        if(str.length() <= i) {
-            return str;
-        } else {
-            String s = str.substring(0, i);
-            char c0 = str.charAt(i);
-            boolean flag = c0 == ' ' || c0 == '\n';
-            String s1 = getFormatFromString(s) + str.substring(i + (flag ? 1 : 0));
-            return s + "\n" + wrapFormattedStringToWidth(s1, wrapWidth);
-        }
-    }
 
     public static int trimStringToWidth(String str, int wrapWidth) {
         int i1 = str.length();

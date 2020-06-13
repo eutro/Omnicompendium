@@ -3,6 +3,8 @@ package eutros.omnicompendium.config;
 import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.loader.GitLoader;
+import eutros.omnicompendium.loader.ImageLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -42,6 +44,7 @@ public class OmCConfig {
         new Thread(() -> {
             GitLoader.syncRepo();
             CompendiumEntries.setLinkChecker(url);
+            Minecraft.getMinecraft().addScheduledTask(ImageLoader::load);
         }).start();
     }
 

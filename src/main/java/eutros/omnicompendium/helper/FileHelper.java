@@ -27,6 +27,18 @@ public class FileHelper {
         }
     }
 
+    public static List<File> getPNGs() {
+        try {
+            return Files.walk(GitLoader.DIR.toPath(), FileVisitOption.FOLLOW_LINKS)
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .filter(f -> f.toString().endsWith(".png"))
+                    .collect(Collectors.toList());
+        } catch(IOException e) {
+            return Collections.emptyList();
+        }
+    }
+
     @Nonnull
     public static File getRelative(@Nullable File source, String relativePath) {
         String parent = null;

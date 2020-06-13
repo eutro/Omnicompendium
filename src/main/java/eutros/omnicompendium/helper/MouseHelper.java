@@ -3,7 +3,7 @@ package eutros.omnicompendium.helper;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ClickHelper {
+public class MouseHelper {
 
     public static boolean contains(int minX, int minY, int maxX, int maxY, int mouseX, int mouseY) {
         return mouseX >= minX
@@ -52,7 +52,7 @@ public class ClickHelper {
         }
 
         public boolean isHovered(int mouseX, int mouseY) {
-            return ClickHelper.contains(minX, minY, maxX, maxY, mouseX, mouseY);
+            return MouseHelper.contains(minX, minY, maxX, maxY, mouseX, mouseY);
         }
 
         public boolean onClick(int mouseX, int mouseY, int mouseButton) {

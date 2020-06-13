@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
-import eutros.omnicompendium.helper.ClickHelper;
+import eutros.omnicompendium.helper.MouseHelper;
+import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.TextHelper;
+import eutros.omnicompendium.loader.ImageLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -17,6 +19,7 @@ import org.commonmark.ext.gfm.tables.TableRow;
 import org.commonmark.node.*;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,8 @@ public class RenderingVisitor extends AbstractVisitor {
 
     @Nullable
     public CompendiumEntry entry = null;
+    @Nullable
+    public File source = null;
 
     public static final int CODE_COLOR = 0xFF000000;
     public static final int CODE_BLOCK_BG_COLOR = 0xFFDDDDDD;
@@ -61,6 +66,7 @@ public class RenderingVisitor extends AbstractVisitor {
         reset();
         visitChildren(document);
         entry = null;
+        source = null;
     }
 
     private void drawText(String text) {
@@ -197,15 +203,15 @@ public class RenderingVisitor extends AbstractVisitor {
     public void visit(FencedCodeBlock fencedCodeBlock) {
         int[] rect = drawCodeBlock(fencedCodeBlock.getLiteral());
         String info = fencedCodeBlock.getInfo();
-        if(entry != null && entry.clickableComponents != null && info != null) {
+        if(entry != null && entry.clickableComponents != null && info != null && !info.trim().isEmpty()) {
             entry.clickableComponents.add(
-                    ClickHelper.ClickableComponent.byBounds(
+                    MouseHelper.ClickableComponent.byBounds(
                             rect[0],
                             rect[1],
                             rect[2],
                             rect[3]
                     )
-                            .withTooltip(Collections.singletonList(info))
+                            .withTooltip(Collections.singletonList(info.trim()))
             );
         }
         lineBreak(fencedCodeBlock);
@@ -313,9 +319,30 @@ public class RenderingVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Image image) {
-        // FIXME: oh boy
         lineBreak(image);
-        visitChildren(image);
+        String link = image.getDestination();
+
+        ImageLoader.Image im = ImageLoader.get(FileHelper.getRelative(source, link));
+
+        if(im != null) {
+            int[] size = im.draw(baseX, y, width);
+            if(entry != null && entry.clickableComponents != null) {
+                entry.clickableComponents.add(
+                        MouseHelper.ClickableComponent.bySize(
+                                baseX,
+                                y,
+                                size[0],
+                                size[1]
+                        )
+                                .withTooltip(linkTooltip(null, link))
+                                .withCallback(entry.linkFunction(link))
+                );
+            }
+            y += size[1];
+        } else {
+            visitChildren(image);
+        }
+
         lineBreak(image);
     }
 
@@ -350,7 +377,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
             if(startY != y) {
                 entry.clickableComponents.add(
-                        ClickHelper.ClickableComponent.bySize(
+                        MouseHelper.ClickableComponent.bySize(
                                 baseX + startX,
                                 startY,
                                 width - startX,
@@ -362,7 +389,7 @@ public class RenderingVisitor extends AbstractVisitor {
                 int deltaY = y - startY;
                 if(deltaY != fontHeight) {
                     entry.clickableComponents.add(
-                            ClickHelper.ClickableComponent.bySize(
+                            MouseHelper.ClickableComponent.bySize(
                                     baseX,
                                     startY + fontHeight,
                                     width,
@@ -373,7 +400,7 @@ public class RenderingVisitor extends AbstractVisitor {
                     );
                 }
                 entry.clickableComponents.add(
-                        ClickHelper.ClickableComponent.bySize(
+                        MouseHelper.ClickableComponent.bySize(
                                 baseX,
                                 y,
                                 x,
@@ -384,7 +411,7 @@ public class RenderingVisitor extends AbstractVisitor {
                 );
             } else {
                 entry.clickableComponents.add(
-                        ClickHelper.ClickableComponent.bySize(
+                        MouseHelper.ClickableComponent.bySize(
                                 baseX + startX,
                                 y,
                                 x - startX,

@@ -4,6 +4,7 @@ import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.gui.entry.EntryList;
+import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.FileHelper;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -96,10 +97,14 @@ public class GuiCompendium extends GuiScreen {
         Point entryListMouse = transmuteEntryListMouse(mouse);
         Point entryMouse = transmuteEntryMouse(mouse);
 
-        List<String> tooltip = entry.getTooltip(entryMouse.x, entryMouse.y);
+        List<String> tooltip = null;
+        if(MouseHelper.contains(0, 0, ENTRY_WIDTH, ENTRY_HEIGHT, entryMouse.x, entryMouse.y)) {
+            tooltip = entry.getTooltip(entryMouse.x, entryMouse.y);
+        }
 
-        if(tooltip == null)
+        if(tooltip == null && MouseHelper.contains(0, 0, ENTRY_LIST_WIDTH + 10, ENTRY_LIST_HEIGHT, entryListMouse.x, entryListMouse.y)) {
             tooltip = entryList.getTooltip(entryListMouse.x, entryListMouse.y);
+        }
 
         if(tooltip != null) {
             drawHoveringText(tooltip, mouseX, mouseY);
@@ -134,7 +139,7 @@ public class GuiCompendium extends GuiScreen {
         mouseY -= GUI_Y;
         mouseY -= ENTRY_Y;
 
-        if(mouseX < 0 || mouseY < 0)
+        if(!MouseHelper.contains(0, 0, ENTRY_WIDTH + 10, ENTRY_HEIGHT, mouseX, mouseY))
             return;
 
         entry.mouseClicked(mouseX, mouseY, mouseButton);

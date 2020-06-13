@@ -103,19 +103,17 @@ public class EntryList {
 
     @Nullable
     public List<String> getTooltip(int mouseX, int mouseY) {
-        if(mouseX > 0 && mouseX < GuiCompendium.ENTRY_LIST_WIDTH)
-            return getEntryUnderMouse(mouseY)
-                    .map(entry -> {
-                        ArrayList<String> tooltip = new ArrayList<>();
-                        tooltip.add(entry.getTitle());
-                        if(entry.source != null) {
-                            tooltip.add(TextFormatting.BLUE + "" +  TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
-                        }
-                        return tooltip;
-                    })
-                    .orElse(null);
+        return getEntryUnderMouse(mouseY)
+                .map(entry -> {
+                    ArrayList<String> tooltip = new ArrayList<>();
+                    tooltip.add(entry.getTitle());
+                    if(entry.source != null) {
+                        tooltip.add(TextFormatting.BLUE + "" +  TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
+                    }
+                    return tooltip;
+                })
+                .orElse(null);
 
-        return null;
     }
 
 }
