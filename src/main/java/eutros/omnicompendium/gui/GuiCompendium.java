@@ -180,4 +180,9 @@ public class GuiCompendium extends GuiScreen {
         entry.handleMouseInput(mouse.y);
     }
 
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
+    }
+
 }

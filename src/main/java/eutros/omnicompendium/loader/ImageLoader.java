@@ -30,6 +30,7 @@ public class ImageLoader {
 
     public static void load() {
         clear();
+        Omnicompendium.LOGGER.info("Loading images.");
         List<Pair<File, BufferedImage>> images = FileHelper.getImages();
         IntBuffer intBuf = ByteBuffer.allocateDirect(images.size() * 4).asIntBuffer();
         GL11.glGenTextures(intBuf);
