@@ -60,9 +60,10 @@ public class EntryList {
                     }
                 }
 
-                mc.fontRenderer.drawString(title, titleX, (ICON_HEIGHT - mc.fontRenderer.FONT_HEIGHT) / 2F, 0xFF000000, false);
+                mc.fontRenderer.drawString(title, titleX, (ICON_HEIGHT - mc.fontRenderer.FONT_HEIGHT) / 2F + 1, 0xFF000000, false);
 
                 mc.getTextureManager().bindTexture(GuiCompendium.BOOK_GUI_TEXTURES);
+                GlStateManager.color(0, 0, 0, 1);
 
                 if(entry == currentPage) {
                     compendium.drawTexturedModalRect(0, 0, 0, ICON_MIN_V + ICON_HEIGHT, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT);
