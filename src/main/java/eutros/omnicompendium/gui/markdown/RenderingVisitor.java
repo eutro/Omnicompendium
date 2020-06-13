@@ -188,7 +188,7 @@ public class RenderingVisitor extends AbstractVisitor {
                     y + mc.fontRenderer.FONT_HEIGHT - 1,
                     CODE_BLOCK_BG_COLOR);
             MonoRenderer.drawString(lastString, baseX, y, CODE_COLOR);
-            x += MonoRenderer.getStringWidth(lastString);
+            x = MonoRenderer.getStringWidth(lastString);
         }
     }
 
