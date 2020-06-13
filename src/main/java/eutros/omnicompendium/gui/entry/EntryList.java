@@ -16,45 +16,46 @@ public class EntryList {
     private static final double SCROLL_SENSITIVITY = 0.2;
 
     private int scroll;
-    private final List<eutros.omnicompendium.gui.entry.CompendiumEntry> entries;
+    public final List<CompendiumEntry> entries = new ArrayList<>();
 
     public static final int ICON_MIN_V = 128;
     public static final int ICON_HEIGHT = 16;
 
-    public EntryList(List<eutros.omnicompendium.gui.entry.CompendiumEntry> entries) {
-        this.entries = entries;
+    public EntryList() {
         scroll = 0;
     }
 
     public void draw(CompendiumEntry currentPage, GuiCompendium gui) {
         int pointer = this.scroll;
-        Iterator<eutros.omnicompendium.gui.entry.CompendiumEntry> it = entries.listIterator(pointer / ICON_HEIGHT);
 
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
         GlStateManager.enableDepth();
         RenderHelper.enableStandardItemLighting();
         Minecraft.getMinecraft().getTextureManager().bindTexture(GuiCompendium.BOOK_GUI_TEXTURES);
-        while(it.hasNext()) {
-            eutros.omnicompendium.gui.entry.CompendiumEntry entry = it.next();
-            int topCrop = Math.floorMod(pointer, 16);
-            int botCrop = Math.max(0, pointer - scroll + ICON_HEIGHT - GuiCompendium.ENTRY_LIST_HEIGHT);
+        synchronized(entries) {
+            Iterator<CompendiumEntry> it = entries.listIterator(pointer / ICON_HEIGHT);
+            while(it.hasNext()) {
+                CompendiumEntry entry = it.next();
+                int topCrop = Math.floorMod(pointer, 16);
+                int botCrop = Math.max(0, pointer - scroll + ICON_HEIGHT - GuiCompendium.ENTRY_LIST_HEIGHT);
 
-            Random random = new Random(entry.hashCode());
+                Random random = new Random(entry.hashCode());
 
-            if(entry == currentPage) {
-                gui.drawTexturedModalRect(0, 0, 0, ICON_MIN_V + ICON_HEIGHT + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
+                if(entry == currentPage) {
+                    gui.drawTexturedModalRect(0, 0, 0, ICON_MIN_V + ICON_HEIGHT + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
+                }
+
+                gui.drawTexturedModalRect(0, 0, random.nextInt(GuiCompendium.TEX_SIZE), ICON_MIN_V + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
+
+                if(pointer - scroll + ICON_HEIGHT > GuiCompendium.ENTRY_LIST_HEIGHT) {
+                    break;
+                }
+
+                int shift = ICON_HEIGHT - Math.floorMod(pointer, ICON_HEIGHT);
+                GlStateManager.translate(0, shift, 0);
+                pointer += shift;
             }
-
-            gui.drawTexturedModalRect(0, 0, random.nextInt(GuiCompendium.TEX_SIZE), ICON_MIN_V + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
-
-            if(pointer - scroll + ICON_HEIGHT > GuiCompendium.ENTRY_LIST_HEIGHT) {
-                break;
-            }
-
-            int shift = ICON_HEIGHT - Math.floorMod(pointer, ICON_HEIGHT);
-            GlStateManager.translate(0, shift, 0);
-            pointer += shift;
         }
         RenderHelper.disableStandardItemLighting();
         GlStateManager.disableDepth();
@@ -77,7 +78,7 @@ public class EntryList {
         boolean buttonState = Mouse.getEventButtonState();
 
         if(button == 0 && buttonState) {
-            Optional<eutros.omnicompendium.gui.entry.CompendiumEntry> entry = getEntryUnderMouse(mouseY);
+            Optional<CompendiumEntry> entry = getEntryUnderMouse(mouseY);
             entry.ifPresent(gui::setEntry);
 
             flag |= entry.isPresent();
@@ -89,7 +90,7 @@ public class EntryList {
 
 
     @Nonnull
-    private Optional<eutros.omnicompendium.gui.entry.CompendiumEntry> getEntryUnderMouse(int mouseY) {
+    private Optional<CompendiumEntry> getEntryUnderMouse(int mouseY) {
         if(mouseY < 0 || mouseY > GuiCompendium.ENTRY_LIST_HEIGHT)
             return Optional.empty();
 

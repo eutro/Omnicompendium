@@ -16,18 +16,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileHelper {
 
-    public static List<File> getEntries() {
+    public static Stream<File> getEntries() {
         try {
-            return Files.walk(new File(GitLoader.DIR, "guides").toPath(), FileVisitOption.FOLLOW_LINKS)
+            Path root = GitLoader.DIR.toPath();
+            return Files.walk(root, FileVisitOption.FOLLOW_LINKS)
+                    .filter(path -> !path.getParent().equals(root))
                     .map(Path::toFile)
                     .filter(File::isFile)
-                    .filter(f -> f.toString().toLowerCase().endsWith(".md"))
-                    .collect(Collectors.toList());
+                    .filter(f -> f.toString().toLowerCase().endsWith(".md"));
         } catch(IOException e) {
-            return Collections.emptyList();
+            return Stream.empty();
         }
     }
 

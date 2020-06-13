@@ -2,6 +2,7 @@ package eutros.omnicompendium.config;
 
 import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
+import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.loader.GitLoader;
 import eutros.omnicompendium.loader.ImageLoader;
 import net.minecraft.client.Minecraft;
@@ -44,8 +45,9 @@ public class OmCConfig {
         new Thread(() -> {
             GitLoader.syncRepo();
             CompendiumEntries.setLinkChecker(url);
+            CompendiumEntries.clear();
             Minecraft.getMinecraft().addScheduledTask(ImageLoader::load);
-        }).start();
+        }, "Omnicompendium Git Loader").start();
     }
 
     public static void registerConfig(FMLPreInitializationEvent evt) {

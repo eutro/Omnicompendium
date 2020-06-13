@@ -24,6 +24,7 @@ public class CompendiumEntries {
     }
 
     private static Map<String, CompendiumEntry> entryMap = new HashMap<>();
+
     private static Pattern regex = Pattern.compile("[.^$*+?()\\[{\\\\|]");
 
     private static String serializeRegex(String s) {
@@ -72,6 +73,10 @@ public class CompendiumEntries {
         File file = FileHelper.getRelative(source, relativePath);
 
         return fromSource(file);
+    }
+
+    public static void clear() {
+        entryMap.clear();
     }
 
 }

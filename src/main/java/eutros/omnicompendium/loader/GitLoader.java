@@ -50,6 +50,7 @@ public class GitLoader {
                         .call();
                 branch = repo.getBranch();
                 git.close();
+                Omnicompendium.LOGGER.info("Finished pull.");
             } catch(RepositoryNotFoundException | NoSuchFileException e) {
                 gitClone();
             }
@@ -71,6 +72,7 @@ public class GitLoader {
         writer.close();
         branch = git.getRepository().getBranch();
         git.close();
+        Omnicompendium.LOGGER.info("Finished cloning.");
     }
 
 }

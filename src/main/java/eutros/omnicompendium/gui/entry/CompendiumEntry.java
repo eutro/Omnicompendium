@@ -205,9 +205,10 @@ public class CompendiumEntry {
                                 return true;
                             }
                         } else {
-                            File file = FileHelper.getRelative(source, link);
+                            File file = FileHelper.getRelative(source, link).getAbsoluteFile();
                             File parent = file.getParentFile();
                             if(parent != null
+                                    && parent.exists()
                                     && desktop.isSupported(Desktop.Action.OPEN)) {
                                 desktop.open(parent);
                             }
