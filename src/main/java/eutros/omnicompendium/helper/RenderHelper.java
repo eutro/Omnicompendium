@@ -11,7 +11,6 @@ public class RenderHelper {
         Minecraft mc = Minecraft.getMinecraft();
         ScaledResolution resolution = new ScaledResolution(mc);
 
-        GlStateManager.disableLighting();
         GlStateManager.enableBlend();
 
         double scaledWidth = resolution.getScaledWidth();
@@ -29,8 +28,6 @@ public class RenderHelper {
 
     public static void resetCamera() {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
-
-        GlStateManager.enableLighting();
         GlStateManager.disableBlend();
     }
 

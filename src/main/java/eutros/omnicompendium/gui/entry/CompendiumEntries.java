@@ -17,7 +17,7 @@ public class CompendiumEntries {
 
     public static class Entries {
 
-        public static final CompendiumEntry BROKEN = new CompendiumEntry(I18n.format("omnicompendium.entry.broken"));
+        public static final CompendiumEntry BROKEN = new CompendiumEntry(I18n.format("omnicompendium.entry.broken"), null);
 
     }
 
@@ -41,9 +41,7 @@ public class CompendiumEntries {
     public static Optional<CompendiumEntry> fromSource(File source) {
         return Optional.ofNullable(entryMap.computeIfAbsent(source.toString(), src -> {
             try {
-                CompendiumEntry entry = new CompendiumEntry(String.join("\n", Files.readAllLines(new File(src).toPath())));
-                entry.source = source;
-                return entry;
+                return new CompendiumEntry(String.join("\n", Files.readAllLines(new File(src).toPath())), source);
             } catch(IOException e) {
                 return null;
             }
@@ -59,7 +57,7 @@ public class CompendiumEntries {
                 return null;
             }
             BufferedReader br = new BufferedReader(new InputStreamReader(stream));
-            return new CompendiumEntry(br.lines().collect(Collectors.joining("\n")));
+            return new CompendiumEntry(br.lines().collect(Collectors.joining("\n")), null);
         }));
     }
 

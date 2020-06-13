@@ -1,15 +1,18 @@
 package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
+import eutros.omnicompendium.helper.RenderHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class EntryList {
 
@@ -17,54 +20,63 @@ public class EntryList {
 
     private int scroll;
     public final List<CompendiumEntry> entries;
+    private final GuiCompendium compendium;
 
     public static final int ICON_MIN_V = 128;
     public static final int ICON_HEIGHT = 16;
 
-    public EntryList(List<CompendiumEntry> entries) {
+    public EntryList(List<CompendiumEntry> entries, GuiCompendium compendium) {
         this.entries = entries;
+        this.compendium = compendium;
         scroll = 0;
     }
 
-    public void draw(CompendiumEntry currentPage, GuiCompendium gui) {
-        int pointer = this.scroll;
-
+    public void draw(CompendiumEntry currentPage) {
+        RenderHelper.setupCamera(
+                compendium.getGuiX(),
+                GuiCompendium.GUI_Y + GuiCompendium.ENTRY_LIST_Y,
+                GuiCompendium.ENTRY_LIST_WIDTH,
+                GuiCompendium.ENTRY_LIST_HEIGHT
+        );
         GlStateManager.pushMatrix();
-        GlStateManager.enableBlend();
-        GlStateManager.enableDepth();
-        RenderHelper.enableStandardItemLighting();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(GuiCompendium.BOOK_GUI_TEXTURES);
+        Minecraft mc = Minecraft.getMinecraft();
+        GlStateManager.translate(0, -scroll, 0);
         synchronized(entries) {
-            Iterator<CompendiumEntry> it = entries.listIterator(pointer / ICON_HEIGHT);
-            while(it.hasNext()) {
-                CompendiumEntry entry = it.next();
-                int topCrop = Math.floorMod(pointer, 16);
-                int botCrop = Math.max(0, pointer - scroll + ICON_HEIGHT - GuiCompendium.ENTRY_LIST_HEIGHT);
+            for(CompendiumEntry entry : entries) {
+                GlStateManager.pushMatrix();
 
-                Random random = new Random(entry.hashCode());
+                int titleX = 5;
+
+                String title = TextFormatting.BOLD.toString() + entry.getTitle();
 
                 if(entry == currentPage) {
-                    gui.drawTexturedModalRect(0, 0, 0, ICON_MIN_V + ICON_HEIGHT + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
+                    int stringWidth = mc.fontRenderer.getStringWidth(title);
+                    titleX -= MathHelper.clamp(
+                            (int) (mc.world.getWorldTime() % stringWidth) - GuiCompendium.ENTRY_LIST_WIDTH / 2,
+                            0,
+                            stringWidth - GuiCompendium.ENTRY_LIST_WIDTH + titleX
+                    );
                 }
 
-                gui.drawTexturedModalRect(0, 0, random.nextInt(GuiCompendium.TEX_SIZE), ICON_MIN_V + topCrop, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT - topCrop - botCrop);
+                mc.fontRenderer.drawString(title, titleX, (ICON_HEIGHT - mc.fontRenderer.FONT_HEIGHT) / 2F, 0xFF000000, false);
 
-                if(pointer - scroll + ICON_HEIGHT > GuiCompendium.ENTRY_LIST_HEIGHT) {
-                    break;
+                mc.getTextureManager().bindTexture(GuiCompendium.BOOK_GUI_TEXTURES);
+
+                if(entry == currentPage) {
+                    compendium.drawTexturedModalRect(0, 0, 0, ICON_MIN_V + ICON_HEIGHT, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT);
                 }
 
-                int shift = ICON_HEIGHT - Math.floorMod(pointer, ICON_HEIGHT);
-                GlStateManager.translate(0, shift, 0);
-                pointer += shift;
+                GlStateManager.popMatrix();
+                compendium.drawTexturedModalRect(0, 0, 0, ICON_MIN_V, GuiCompendium.ENTRY_LIST_WIDTH, ICON_HEIGHT);
+
+                GlStateManager.translate(0, ICON_HEIGHT, 0);
             }
         }
-        RenderHelper.disableStandardItemLighting();
-        GlStateManager.disableDepth();
-        GlStateManager.disableBlend();
+        RenderHelper.resetCamera();
         GlStateManager.popMatrix();
     }
 
-    public boolean handleMouseInput(int mouseY, GuiCompendium gui) {
+    public boolean handleMouseInput(int mouseY) {
         int scroll = Mouse.getDWheel();
         boolean flag = false;
 
@@ -80,15 +92,13 @@ public class EntryList {
 
         if(button == 0 && buttonState) {
             Optional<CompendiumEntry> entry = getEntryUnderMouse(mouseY);
-            entry.ifPresent(gui::setEntry);
+            entry.ifPresent(compendium::setEntry);
 
             flag |= entry.isPresent();
         }
 
         return flag;
     }
-
-
 
     @Nonnull
     private Optional<CompendiumEntry> getEntryUnderMouse(int mouseY) {
@@ -104,13 +114,13 @@ public class EntryList {
     }
 
     @Nullable
-    public List<String> getTooltip(int mouseX, int mouseY) {
+    public List<String> getTooltip(int mouseY) {
         return getEntryUnderMouse(mouseY)
                 .map(entry -> {
                     ArrayList<String> tooltip = new ArrayList<>();
                     tooltip.add(entry.getTitle());
                     if(entry.source != null) {
-                        tooltip.add(TextFormatting.BLUE + "" +  TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
+                        tooltip.add(TextFormatting.BLUE + "" + TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
                     }
                     return tooltip;
                 })

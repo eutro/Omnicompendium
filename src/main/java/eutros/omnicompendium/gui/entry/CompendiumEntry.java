@@ -8,10 +8,11 @@ import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.RenderHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.client.config.GuiUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -35,6 +36,8 @@ import java.util.Optional;
 public class CompendiumEntry {
 
     public static final int SCROLL_BAR_WIDTH = 10;
+    public static final int PAD_BOTTOM = 10;
+    public static final int SCROLL_BAR_X = GuiCompendium.ENTRY_WIDTH + 2;
     private final Node node;
     private String title = Constants.UNTITLED;
     protected GuiCompendium compendium;
@@ -43,12 +46,12 @@ public class CompendiumEntry {
     public List<MouseHelper.ClickableComponent> clickableComponents = null;
 
     @Nullable
-    public File source;
+    public final File source;
     public int scroll = 0;
 
-    private boolean scrollBarClicked = false;
+    private float scrollBarClicked = -1;
 
-    public CompendiumEntry(String markdown) {
+    public CompendiumEntry(String markdown, @Nullable File source) {
         List<Extension> extensions = Arrays.asList(
                 TablesExtension.create(),
                 StrikethroughExtension.create());
@@ -56,12 +59,15 @@ public class CompendiumEntry {
                 .extensions(extensions)
                 .build();
 
+        this.source = source;
         node = parser.parse(markdown);
 
         TitleVisitor visitor = new TitleVisitor();
         node.accept(visitor);
         if(visitor.title != null) {
             title = visitor.title;
+        } else if(source != null) {
+            title = FilenameUtils.getBaseName(source.getName());
         }
     }
 
@@ -85,19 +91,87 @@ public class CompendiumEntry {
 
         RenderHelper.resetCamera();
 
-        float maxScroll = Math.max(RenderingVisitor.INSTANCE.y, GuiCompendium.ENTRY_HEIGHT);
+        drawScrollBar();
+    }
+
+    private int[] getScrollBar() {
+        float maxScroll = getMaxScroll();
         float scrollPct = scroll / maxScroll;
 
-        int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT * GuiCompendium.ENTRY_HEIGHT / maxScroll);
-        int scrollHeight = (int) ((GuiCompendium.ENTRY_HEIGHT - 2) * scrollPct);
+        int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT *
+                ((float) GuiCompendium.ENTRY_HEIGHT / (Math.max(RenderingVisitor.INSTANCE.y + PAD_BOTTOM, GuiCompendium.ENTRY_HEIGHT))));
+        int barY = (int) ((GuiCompendium.ENTRY_HEIGHT - barHeight) * scrollPct);
 
-        GuiUtils.drawGradientRect(0,
-                GuiCompendium.ENTRY_WIDTH + 2,
-                scrollHeight,
-                GuiCompendium.ENTRY_WIDTH + SCROLL_BAR_WIDTH,
-                scrollHeight + barHeight,
-                0xAAAAAA0,
-                0x888888);
+        return new int[] {
+                SCROLL_BAR_X,
+                barY,
+                SCROLL_BAR_WIDTH,
+                barHeight
+        };
+    }
+
+    private void setScroll(int barY, int barHeight) {
+        if(barHeight == GuiCompendium.ENTRY_HEIGHT) {
+            scroll = 0;
+            return;
+        }
+        float scrollPct = (float) barY / (GuiCompendium.ENTRY_HEIGHT - barHeight);
+        int maxScroll = getMaxScroll();
+
+        this.scroll = MathHelper.clamp(
+                (int) (scrollPct * maxScroll),
+                0,
+                maxScroll
+        );
+    }
+
+    private void drawScrollBar() {
+        int[] bar = getScrollBar();
+        int x = bar[0];
+        int y = bar[1];
+        int width = bar[2];
+        int height = bar[3];
+
+        int border = 2;
+        Gui.drawRect( // corners
+                x,
+                y,
+                x + width,
+                y + height,
+                0xFF7E7E7E
+        );
+        Gui.drawRect( // top left
+                x,
+                y,
+                x + width - border,
+                y + height - border,
+                0xFFFFFFFF
+        );
+        Gui.drawRect( // bottom right
+                x + border,
+                y + border,
+                x + width,
+                y + height,
+                0xFF373737
+        );
+        Gui.drawRect( // inner section
+                x + border,
+                y + border,
+                x + width - border,
+                y + height - border,
+                0xFF8B8B8B
+        );
+        if(scrollBarClicked < 0) return;
+
+        GlStateManager.enableBlend();
+        Gui.drawRect( // overlay
+                x,
+                y,
+                x + width,
+                y + height,
+                0x22FFFFFF
+        );
+        GlStateManager.disableBlend();
     }
 
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
@@ -109,12 +183,27 @@ public class CompendiumEntry {
         }
 
         if(mouseButton == 0) {
-            scrollBarClicked = MouseHelper.isClicked(GuiCompendium.ENTRY_WIDTH,
+            int[] bar = getScrollBar();
+            int barHeight = bar[3];
+            int barY = bar[1];
+            if(MouseHelper.isClicked(
+                    bar[0],
+                    barY,
+                    bar[2],
+                    barHeight,
+                    mouseX,
+                    mouseY
+            )) {
+                scrollBarClicked = (mouseY - barY) / (float) barHeight;
+            } else if(MouseHelper.isClicked(SCROLL_BAR_X,
                     0,
                     SCROLL_BAR_WIDTH,
                     GuiCompendium.ENTRY_HEIGHT,
                     mouseX,
-                    mouseY);
+                    mouseY)) {
+                setScroll(mouseY - barHeight / 2, barHeight);
+                scrollBarClicked = 0.5F;
+            }
         }
     }
 
@@ -127,20 +216,22 @@ public class CompendiumEntry {
         scroll = 0;
     }
 
-    public static final double SCROLL_SENSITIVITY = 0.1;
+    public static final double SCROLL_SENSITIVITY = 0.2;
 
     public void handleMouseInput(int mouseY) {
         int maxScroll = getMaxScroll();
-        int scroll = this.scroll - (int) (Mouse.getDWheel() * SCROLL_SENSITIVITY);
 
-        if(scrollBarClicked) {
+        if(scrollBarClicked >= 0) {
             if(Mouse.isButtonDown(0)) {
-                float scrollPct = mouseY / (float) GuiCompendium.ENTRY_HEIGHT;
-                scroll = (int) (maxScroll * scrollPct);
+                int[] bar = getScrollBar();
+                int barHeight = bar[3];
+                setScroll(mouseY - (int) (scrollBarClicked * barHeight), barHeight);
             } else {
-                scrollBarClicked = false;
+                scrollBarClicked = -1;
             }
         }
+
+        int scroll = this.scroll - (int) (Mouse.getDWheel() * SCROLL_SENSITIVITY);
 
         this.scroll = MathHelper.clamp(
                 scroll,
@@ -150,7 +241,7 @@ public class CompendiumEntry {
     }
 
     private int getMaxScroll() {
-        return Math.max(0, RenderingVisitor.INSTANCE.y - GuiCompendium.ENTRY_HEIGHT + 10);
+        return Math.max(0, RenderingVisitor.INSTANCE.y - GuiCompendium.ENTRY_HEIGHT + PAD_BOTTOM);
     }
 
     @Nullable
@@ -199,7 +290,6 @@ public class CompendiumEntry {
                 if(Desktop.isDesktopSupported()) {
                     Desktop desktop = Desktop.getDesktop();
                     File file = FileHelper.getRelative(source, link);
-                    if(file.exists()) file = file.getCanonicalFile();
                     if(tryOpenContaining(desktop, file)) return true;
                     if(tryOpenAsEntry()) return true;
                     if(tryOpenAsFile(desktop, file)) return true;
@@ -226,20 +316,19 @@ public class CompendiumEntry {
                     || !desktop.isSupported(Desktop.Action.OPEN)
                     || GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
 
-            desktop.open(file);
+            desktop.open(file.getCanonicalFile());
 
             return false;
         }
 
         protected boolean tryOpenContaining(Desktop desktop, File file) throws IOException {
-            if(!file.exists()
-                    || !desktop.isSupported(Desktop.Action.OPEN)
+            if(!desktop.isSupported(Desktop.Action.OPEN)
                     || !GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
 
             File parent = file.getParentFile();
             if(parent == null || !parent.exists()) return false;
 
-            desktop.open(parent);
+            desktop.open(parent.getCanonicalFile());
             return true;
         }
 

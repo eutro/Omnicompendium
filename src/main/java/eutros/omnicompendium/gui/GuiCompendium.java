@@ -26,7 +26,7 @@ public class GuiCompendium extends GuiScreen {
     public static final int GUI_Y = 2;
 
     public static final int ENTRY_WIDTH = (int) (198 * GUI_SCALE);
-    public static final int ENTRY_HEIGHT = (int) (116 * GUI_SCALE);
+    public static final int ENTRY_HEIGHT = (int) (115 * GUI_SCALE);
     public static final int ENTRY_LIST_WIDTH = (int) (45 * GUI_SCALE);
     public static final int ENTRY_LIST_HEIGHT = (int) (98 * GUI_SCALE);
 
@@ -45,7 +45,7 @@ public class GuiCompendium extends GuiScreen {
     public GuiCompendium() {
         super();
         this.setGuiSize(TEX_SIZE, TEX_SIZE);
-        entryList = new EntryList(CompendiumEntries.listEntries);
+        entryList = new EntryList(CompendiumEntries.listEntries, this);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class GuiCompendium extends GuiScreen {
         }
 
         if(tooltip == null && MouseHelper.contains(0, 0, ENTRY_LIST_WIDTH + 10, ENTRY_LIST_HEIGHT, entryListMouse.x, entryListMouse.y)) {
-            tooltip = entryList.getTooltip(entryListMouse.x, entryListMouse.y);
+            tooltip = entryList.getTooltip(entryListMouse.y);
         }
 
         if(tooltip != null) {
@@ -113,7 +113,7 @@ public class GuiCompendium extends GuiScreen {
 
     private void drawEntryList() {
         GlStateManager.translate(0, ENTRY_LIST_Y, 0);
-        entryList.draw(entry, this);
+        entryList.draw(entry);
     }
 
     private void drawEntry() {
@@ -148,14 +148,16 @@ public class GuiCompendium extends GuiScreen {
         int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
         mouseX -= getGuiX();
 
-        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight;
         mouseY -= GUI_Y;
 
-        if(mouseX > 0 &&
-                mouseX < ENTRY_LIST_WIDTH &&
-                mouseY > ENTRY_LIST_Y &&
-                mouseY < ENTRY_LIST_Y + ENTRY_LIST_HEIGHT) {
-            if(entryList.handleMouseInput(mouseY - ENTRY_LIST_Y, this)) return;
+        if(MouseHelper.isClicked(0,
+                ENTRY_LIST_Y,
+                ENTRY_LIST_WIDTH,
+                ENTRY_LIST_HEIGHT,
+                mouseX,
+                mouseY)) {
+            if(entryList.handleMouseInput(mouseY - ENTRY_LIST_Y)) return;
         }
 
         Point mouse = transmuteEntryMouse(new Point(mouseX, mouseY));
