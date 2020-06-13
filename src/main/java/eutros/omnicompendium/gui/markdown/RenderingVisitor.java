@@ -35,7 +35,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
     public static final int CODE_COLOR = 0xFF000000;
     public static final int CODE_BLOCK_BG_COLOR = 0xFFDDDDDD;
-    public static final TextFormatting DEFAULT_COLOUR = TextFormatting.BLACK;
+    public static final TextFormatting DEFAULT_COLOUR = TextFormatting.DARK_GRAY;
     private final Minecraft mc = Minecraft.getMinecraft();
     private int fontHeight; // used for setting callback because funny headings
     private int baseX;
@@ -324,7 +324,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
         ImageLoader.Image im = ImageLoader.get(FileHelper.getRelative(source, link));
 
-        if(im != null) {
+        if(im != ImageLoader.missing) {
             int[] size = im.draw(baseX, y, width);
             if(entry != null && entry.clickableComponents != null) {
                 entry.clickableComponents.add(
@@ -342,7 +342,16 @@ public class RenderingVisitor extends AbstractVisitor {
         } else {
             int startY = y;
 
+            int[] size;
+            if(im != null) {
+                size = im.draw(baseX, y, 8);
+                x += size[0];
+            }
+
+            style.setColor(TextFormatting.BLUE);
             visitChildren(image);
+            style.setColor(DEFAULT_COLOUR);
+            finishLine();
 
             if(entry != null && entry.clickableComponents != null) {
                 entry.clickableComponents.add(
@@ -350,7 +359,7 @@ public class RenderingVisitor extends AbstractVisitor {
                                 baseX,
                                 startY,
                                 baseX + width,
-                                y + fontHeight
+                                y
                         )
                                 .withTooltip(linkTooltip(null, link))
                                 .withCallback(entry.linkFunction(link))

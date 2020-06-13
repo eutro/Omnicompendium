@@ -2,14 +2,16 @@ package eutros.omnicompendium.loader;
 
 import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.helper.FileHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.ResourceLocation;
+import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL11;
 
-import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -24,24 +26,29 @@ public class ImageLoader {
 
     private static Map<File, Image> textureMap = new HashMap<>();
 
+    public static Image missing = null;
+
     public static void load() {
         clear();
-        List<File> images = FileHelper.getPNGs();
+        List<Pair<File, BufferedImage>> images = FileHelper.getImages();
         IntBuffer intBuf = ByteBuffer.allocateDirect(images.size() * 4).asIntBuffer();
         GL11.glGenTextures(intBuf);
         intBuf.rewind();
 
-        for(File image : images) {
-            BufferedImage im;
-            try {
-                im = ImageIO.read(image);
-            } catch(IOException e) {
-                Omnicompendium.LOGGER.warn(String.format("Failed to load image: %s", image), e);
-                GL11.glDeleteTextures(intBuf.get());
-                continue;
-            }
+        try {
+            BufferedImage image = ImageIO.read(
+                    Minecraft.getMinecraft()
+                            .getResourceManager()
+                            .getResource(new ResourceLocation(Omnicompendium.MOD_ID, "textures/gui/missing_image.png"))
+                            .getInputStream()
+            );
+            missing = new Image(GlStateManager.generateTexture(), image);
+        } catch(IOException e) {
+            Omnicompendium.LOGGER.warn("Failed to load missing image texture.", e);
+        }
 
-            textureMap.put(image, new Image(intBuf.get(), im));
+        for(Pair<File, BufferedImage> pair : images) {
+            textureMap.put(pair.getLeft(), new Image(intBuf.get(), pair.getRight()));
         }
     }
 
@@ -52,9 +59,8 @@ public class ImageLoader {
         textureMap.clear();
     }
 
-    @Nullable
     public static Image get(File file) {
-        return textureMap.get(file);
+        return textureMap.getOrDefault(file, missing);
     }
 
     public static class Image {
