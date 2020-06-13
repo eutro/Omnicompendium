@@ -15,7 +15,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.util.Collections;
 import java.util.List;
 
 import static eutros.omnicompendium.Omnicompendium.LOGGER;
@@ -87,8 +86,6 @@ public class GitLoader {
                 .setDirectory(DIR)
                 .setBranch(OmCConfig.branch)
                 .setURI(OmCConfig.url)
-                .setCloneAllBranches(false)
-                .setBranchesToClone(Collections.singleton(OmCConfig.branch))
                 // Why is shallow cloning still not supported? https://bugs.eclipse.org/bugs/show_bug.cgi?id=475615
                 .setProgressMonitor(PROGRESS_MONITOR);
         Git git = clone.call();

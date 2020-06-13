@@ -16,12 +16,13 @@ public class EntryList {
     private static final double SCROLL_SENSITIVITY = 0.2;
 
     private int scroll;
-    public final List<CompendiumEntry> entries = new ArrayList<>();
+    public final List<CompendiumEntry> entries;
 
     public static final int ICON_MIN_V = 128;
     public static final int ICON_HEIGHT = 16;
 
-    public EntryList() {
+    public EntryList(List<CompendiumEntry> entries) {
+        this.entries = entries;
         scroll = 0;
     }
 

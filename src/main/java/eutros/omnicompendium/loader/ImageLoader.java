@@ -29,28 +29,31 @@ public class ImageLoader {
     public static Image missing = null;
 
     public static void load() {
-        clear();
-        Omnicompendium.LOGGER.info("Loading images.");
         List<Pair<File, BufferedImage>> images = FileHelper.getImages();
-        IntBuffer intBuf = ByteBuffer.allocateDirect(images.size() * 4).asIntBuffer();
-        GL11.glGenTextures(intBuf);
-        intBuf.rewind();
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            clear();
+            Omnicompendium.LOGGER.info("Loading images.");
+            IntBuffer intBuf = ByteBuffer.allocateDirect(images.size() * 4).asIntBuffer();
+            GL11.glGenTextures(intBuf);
+            intBuf.rewind();
 
-        try {
-            BufferedImage image = ImageIO.read(
-                    Minecraft.getMinecraft()
-                            .getResourceManager()
-                            .getResource(new ResourceLocation(Omnicompendium.MOD_ID, "textures/gui/missing_image.png"))
-                            .getInputStream()
-            );
-            missing = new Image(GlStateManager.generateTexture(), image);
-        } catch(IOException e) {
-            Omnicompendium.LOGGER.warn("Failed to load missing image texture.", e);
-        }
+            try {
+                BufferedImage image = ImageIO.read(
+                        Minecraft.getMinecraft()
+                                .getResourceManager()
+                                .getResource(new ResourceLocation(Omnicompendium.MOD_ID, "textures/gui/missing_image.png"))
+                                .getInputStream()
+                );
+                missing = new Image(GlStateManager.generateTexture(), image);
+            } catch(IOException e) {
+                Omnicompendium.LOGGER.warn("Failed to load missing image texture.", e);
+            }
 
-        for(Pair<File, BufferedImage> pair : images) {
-            textureMap.put(pair.getLeft(), new Image(intBuf.get(), pair.getRight()));
-        }
+            for(Pair<File, BufferedImage> pair : images) {
+                textureMap.put(pair.getLeft(), new Image(intBuf.get(), pair.getRight()));
+            }
+            Omnicompendium.LOGGER.info("Finished loading images.");
+        });
     }
 
     private static void clear() {

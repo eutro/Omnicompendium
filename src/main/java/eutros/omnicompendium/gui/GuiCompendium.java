@@ -4,7 +4,6 @@ import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.gui.entry.EntryList;
-import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.MouseHelper;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -14,10 +13,7 @@ import org.lwjgl.input.Mouse;
 import javax.annotation.Nonnull;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 public class GuiCompendium extends GuiScreen {
 
@@ -49,21 +45,7 @@ public class GuiCompendium extends GuiScreen {
     public GuiCompendium() {
         super();
         this.setGuiSize(TEX_SIZE, TEX_SIZE);
-        entryList = new EntryList();
-        new Thread(() ->
-                FileHelper.getEntries()
-                        .map(CompendiumEntries::fromSource)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .forEach(entry -> {
-                            synchronized(entryList.entries) {
-                                int index = Collections.binarySearch(entryList.entries, entry, Comparator.comparing(CompendiumEntry::getTitle));
-                                if(index < 0) index = -index - 1;
-
-                                entryList.entries.add(index, entry);
-                            }
-                        })
-        ).start();
+        entryList = new EntryList(CompendiumEntries.listEntries);
     }
 
     @Override

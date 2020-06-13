@@ -25,6 +25,7 @@ public class FileHelper {
             Path root = GitLoader.DIR.toPath();
             return Files.walk(root, FileVisitOption.FOLLOW_LINKS)
                     .filter(path -> !path.getParent().equals(root))
+                    .filter(path -> !root.relativize(path).toString().startsWith("."))
                     .map(Path::toFile)
                     .filter(File::isFile)
                     .filter(f -> f.toString().toLowerCase().endsWith(".md"));
@@ -35,9 +36,9 @@ public class FileHelper {
 
     public static List<Pair<File, BufferedImage>> getImages() {
         try {
-            Path git = (new File(GitLoader.DIR, ".git")).toPath();
-            return Files.walk(GitLoader.DIR.toPath(), FileVisitOption.FOLLOW_LINKS)
-                    .filter(path -> !path.startsWith(git))
+            Path root = GitLoader.DIR.toPath();
+            return Files.walk(root, FileVisitOption.FOLLOW_LINKS)
+                    .filter(path -> !root.relativize(path).toString().startsWith("."))
                     .map(Path::toFile)
                     .filter(File::isFile)
                     .map(file -> {

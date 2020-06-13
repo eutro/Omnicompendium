@@ -8,9 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,11 +22,12 @@ public class CompendiumEntries {
     }
 
     private static Map<String, CompendiumEntry> entryMap = new HashMap<>();
+    public static final List<CompendiumEntry> listEntries = new ArrayList<>();
 
-    private static Pattern regex = Pattern.compile("[.^$*+?()\\[{\\\\|]");
+    private static Pattern serializer = Pattern.compile("[.^$*+?()\\[{\\\\|]");
 
     private static String serializeRegex(String s) {
-        return regex.matcher(s).replaceAll("\\\\$0");
+        return serializer.matcher(s).replaceAll("\\\\$0");
     }
 
     public static Pattern linkChecker;
@@ -75,8 +74,23 @@ public class CompendiumEntries {
         return fromSource(file);
     }
 
-    public static void clear() {
+    public static void refresh() {
         entryMap.clear();
+        listEntries.clear();
+        new Thread(() ->
+                FileHelper.getEntries()
+                        .map(CompendiumEntries::fromSource)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .forEach(entry -> {
+                            synchronized(listEntries) {
+                                int index = Collections.binarySearch(listEntries, entry, Comparator.comparing(CompendiumEntry::getTitle));
+                                if(index < 0) index = -index - 1;
+
+                                listEntries.add(index, entry);
+                            }
+                        })
+        ).start();
     }
 
 }
