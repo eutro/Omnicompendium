@@ -78,6 +78,7 @@ public class RenderingVisitor extends AbstractVisitor {
         if(x != 0 && width - x < mc.fontRenderer.getStringWidth(firstWord[0])) {
             x = 0;
             y += mc.fontRenderer.FONT_HEIGHT;
+            text = text.replaceFirst("^\\s+", "");
         }
         String str = style.getFormattingCode() + text;
 
