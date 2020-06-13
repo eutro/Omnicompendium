@@ -21,6 +21,8 @@ public class CompendiumEntries {
 
     }
 
+    public static final String UNTITLED = I18n.format("omnicompendium.entry.untitled");
+
     private static Map<String, CompendiumEntry> entryMap = new HashMap<>();
     public static final List<CompendiumEntry> listEntries = new ArrayList<>();
 

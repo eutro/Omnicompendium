@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.math.MathHelper;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class CompendiumEntry {
 
@@ -39,7 +41,7 @@ public class CompendiumEntry {
     public static final int PAD_BOTTOM = 10;
     public static final int SCROLL_BAR_X = GuiCompendium.ENTRY_WIDTH + 2;
     private final Node node;
-    private String title = Constants.UNTITLED;
+    private final String title;
     protected GuiCompendium compendium;
 
     @Nullable
@@ -67,8 +69,26 @@ public class CompendiumEntry {
         if(visitor.title != null) {
             title = visitor.title;
         } else if(source != null) {
-            title = FilenameUtils.getBaseName(source.getName());
+            String baseName = FilenameUtils.getBaseName(source.getName());
+            title = splitFileName(baseName);
+        } else {
+            title = CompendiumEntries.UNTITLED;
         }
+    }
+
+    public static final Pattern CAMEL_SPLITTER = Pattern.compile("([a-z])([A-Z])");
+
+    private String splitFileName(String name) {
+        if(name.contains("_")) { // snake_case
+            name = String.join(" ", name.split("_"));
+        } else if(name.contains("-")) { // hyphen-case
+            name = String.join(" ", name.split("-"));
+        } else if(!name.contains(" ")) { // camelCase/PascalCase
+            name = CAMEL_SPLITTER.matcher(name).replaceAll("$1 $2");
+        } else {
+            return name;
+        }
+        return WordUtils.capitalizeFully(name);
     }
 
     public void draw() {

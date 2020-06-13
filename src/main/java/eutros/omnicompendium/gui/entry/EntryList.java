@@ -51,11 +51,13 @@ public class EntryList {
 
                 if(entry == currentPage) {
                     int stringWidth = mc.fontRenderer.getStringWidth(title);
-                    titleX -= MathHelper.clamp(
-                            (int) (mc.world.getWorldTime() % stringWidth) - GuiCompendium.ENTRY_LIST_WIDTH / 2,
-                            0,
-                            stringWidth - GuiCompendium.ENTRY_LIST_WIDTH + titleX
-                    );
+                    if(stringWidth > GuiCompendium.ENTRY_LIST_WIDTH) {
+                        titleX -= MathHelper.clamp(
+                                (int) (mc.world.getWorldTime() % stringWidth) - GuiCompendium.ENTRY_LIST_WIDTH / 2,
+                                0,
+                                stringWidth - GuiCompendium.ENTRY_LIST_WIDTH + titleX
+                        );
+                    }
                 }
 
                 mc.fontRenderer.drawString(title, titleX, (ICON_HEIGHT - mc.fontRenderer.FONT_HEIGHT) / 2F, 0xFF000000, false);
