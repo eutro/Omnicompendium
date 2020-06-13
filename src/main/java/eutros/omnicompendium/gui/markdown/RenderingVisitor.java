@@ -340,7 +340,22 @@ public class RenderingVisitor extends AbstractVisitor {
             }
             y += size[1];
         } else {
+            int startY = y;
+
             visitChildren(image);
+
+            if(entry != null && entry.clickableComponents != null) {
+                entry.clickableComponents.add(
+                        MouseHelper.ClickableComponent.byBounds(
+                                baseX,
+                                startY,
+                                baseX + width,
+                                y + fontHeight
+                        )
+                                .withTooltip(linkTooltip(null, link))
+                                .withCallback(entry.linkFunction(link))
+                );
+            }
         }
 
         lineBreak(image);

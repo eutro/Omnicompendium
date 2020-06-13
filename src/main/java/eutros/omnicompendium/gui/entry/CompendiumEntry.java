@@ -2,8 +2,9 @@ package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.markdown.RenderingVisitor;
-import eutros.omnicompendium.helper.MouseHelper;
+import eutros.omnicompendium.gui.markdown.TitleVisitor;
 import eutros.omnicompendium.helper.FileHelper;
+import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.RenderHelper;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.math.MathHelper;
@@ -31,6 +32,7 @@ public class CompendiumEntry {
 
     public static final int SCROLL_BAR_WIDTH = 10;
     private final Node node;
+    private String title = Constants.UNTITLED;
     protected GuiCompendium compendium;
 
     @Nullable
@@ -51,6 +53,12 @@ public class CompendiumEntry {
                 .build();
 
         node = parser.parse(markdown);
+
+        TitleVisitor visitor = new TitleVisitor();
+        node.accept(visitor);
+        if(visitor.title != null) {
+            title = visitor.title;
+        }
     }
 
     public void draw() {
@@ -164,8 +172,7 @@ public class CompendiumEntry {
 
     @Nonnull
     public String getTitle() {
-        // FIXME: re-implement titles
-        return Constants.UNTITLED;
+        return title;
     }
 
     public LinkFunction linkFunction(String destination) {

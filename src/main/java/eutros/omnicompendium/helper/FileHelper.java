@@ -20,7 +20,7 @@ public class FileHelper {
             return Files.walk(new File(GitLoader.DIR, "guides").toPath(), FileVisitOption.FOLLOW_LINKS)
                     .map(Path::toFile)
                     .filter(File::isFile)
-                    .filter(f -> f.toString().endsWith(".md"))
+                    .filter(f -> f.toString().toLowerCase().endsWith(".md"))
                     .collect(Collectors.toList());
         } catch(IOException e) {
             return Collections.emptyList();
@@ -32,7 +32,7 @@ public class FileHelper {
             return Files.walk(GitLoader.DIR.toPath(), FileVisitOption.FOLLOW_LINKS)
                     .map(Path::toFile)
                     .filter(File::isFile)
-                    .filter(f -> f.toString().endsWith(".png"))
+                    .filter(f -> f.toString().toLowerCase().endsWith(".png"))
                     .collect(Collectors.toList());
         } catch(IOException e) {
             return Collections.emptyList();
