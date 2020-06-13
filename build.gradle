@@ -56,14 +56,18 @@ dependencies {
 
 reobf {
     jar {
-        extraLines "PK: org/eclipse eutros/omnicompendium/shade/org/eclipse"
-        extraLines "PK: org/bouncycastle eutros/omnicompendium/shade/org/bouncycastle"
-        extraLines "PK: org/slf4j eutros/omnicompendium/shade/org/slf4j"
-        extraLines "PK: com/jcraft eutros/omnicompendium/shade/com/jcraft"
-        extraLines "PK: com/googlecode eutros/omnicompendium/shade/com/googlecode"
+        extraLines pkgShade('org/eclipse')
+        extraLines pkgShade('org/bouncycastle')
+        extraLines pkgShade('org/slf4j')
+        extraLines pkgShade('com/jcraft')
+        extraLines pkgShade('com/googlecode')
 
-        extraLines "PK: com/atlassian eutros/omnicompendium/shade/com/atlassian"
+        extraLines pkgShade('com/atlassian')
     }
+}
+
+def pkgShade(String pkg) {
+    return "PK: ${pkg} ${group}/${archivesBaseName}/shade/${pkg}"
 }
 
 minecraft {

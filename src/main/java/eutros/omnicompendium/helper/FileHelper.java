@@ -1,5 +1,6 @@
 package eutros.omnicompendium.helper;
 
+import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.loader.GitLoader;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -53,6 +54,9 @@ public class FileHelper {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         } catch(IOException e) {
+            return Collections.emptyList();
+        } catch(Throwable e) {
+            Omnicompendium.LOGGER.error("Caught exception from image loading.", e);
             return Collections.emptyList();
         }
     }

@@ -2,6 +2,7 @@ package eutros.omnicompendium.helper;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class MouseHelper {
 
@@ -24,7 +25,7 @@ public class MouseHelper {
         private final int maxY;
 
         private ClickFunction callback = null;
-        private List<String> tooltip = null;
+        private Supplier<? extends List<String>> tooltip = null;
 
         protected ClickableComponent(int minX, int minY, int maxX, int maxY) {
             this.minX = minX;
@@ -47,6 +48,10 @@ public class MouseHelper {
         }
 
         public ClickableComponent withTooltip(List<String> tooltip) {
+            return this.withTooltip(() -> tooltip);
+        }
+
+        public ClickableComponent withTooltip(Supplier<? extends List<String>> tooltip) {
             this.tooltip = tooltip;
             return this;
         }
@@ -65,7 +70,7 @@ public class MouseHelper {
 
         @Nullable
         public List<String> getTooltip() {
-            return tooltip;
+            return tooltip.get();
         }
 
     }

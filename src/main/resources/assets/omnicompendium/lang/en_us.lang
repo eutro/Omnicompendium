@@ -1,5 +1,6 @@
 omnicompendium.entry.broken=# Uh oh, something is broken.
 omnicompendium.entry.untitled=Untitled
-omnicompendium.component.link_click=Click to open
+omnicompendium.component.link_open=Click to open
+omnicompendium.component.link_open_containing=Click to open containing folder (if local file)
 itemGroup.Omnicompendium=Omnicompendium
 item.omnicompendium.compendium.name=Omnicompendium

@@ -1,12 +1,15 @@
 package eutros.omnicompendium.gui.entry;
 
+import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.markdown.RenderingVisitor;
 import eutros.omnicompendium.gui.markdown.TitleVisitor;
 import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.RenderHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import org.commonmark.Extension;
@@ -21,8 +24,9 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -189,34 +193,63 @@ public class CompendiumEntry {
 
         @Override
         public boolean click(int mouseX, int mouseY, int mouseButton) {
+            if(tryOpenAsEntry()) return true;
+
+            try {
+                if(Desktop.isDesktopSupported()) {
+                    Desktop desktop = Desktop.getDesktop();
+                    File file = FileHelper.getRelative(source, link);
+                    if(file.exists()) file = file.getCanonicalFile();
+                    if(tryOpenContaining(desktop, file)) return true;
+                    if(tryOpenAsEntry()) return true;
+                    if(tryOpenAsFile(desktop, file)) return true;
+                    if(tryOpenAsUrl(desktop)) return true;
+                }
+            } catch(Throwable e) {
+                Omnicompendium.LOGGER.error("An unexpected error occurred.", e);
+            }
+            return false;
+        }
+
+        protected boolean tryOpenAsEntry() {
             Optional<CompendiumEntry> linkedEntry = CompendiumEntries.fromLink(link, source);
             GuiCompendium gui = getCompendium();
             if(linkedEntry.isPresent()) {
                 gui.setEntry(linkedEntry.get());
                 return true;
-            } else {
-                try {
-                    if(Desktop.isDesktopSupported()) {
-                        Desktop desktop = Desktop.getDesktop();
-                        if(link.startsWith("http")) {
-                            URI uri = new URI(link);
-                            if(desktop.isSupported(Desktop.Action.BROWSE)) {
-                                desktop.browse(uri);
-                                return true;
-                            }
-                        } else {
-                            File file = FileHelper.getRelative(source, link).getAbsoluteFile();
-                            File parent = file.getParentFile();
-                            if(parent != null
-                                    && parent.exists()
-                                    && desktop.isSupported(Desktop.Action.OPEN)) {
-                                desktop.open(parent);
-                            }
-                        }
-                    }
-                } catch(NoClassDefFoundError | IOException | URISyntaxException ignored) {
-                    // *shrug*
+            }
+            return false;
+        }
+
+        protected boolean tryOpenAsFile(Desktop desktop, File file) throws IOException {
+            if(!file.exists()
+                    || !desktop.isSupported(Desktop.Action.OPEN)
+                    || GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
+
+            desktop.open(file);
+
+            return false;
+        }
+
+        protected boolean tryOpenContaining(Desktop desktop, File file) throws IOException {
+            if(!file.exists()
+                    || !desktop.isSupported(Desktop.Action.OPEN)
+                    || !GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
+
+            File parent = file.getParentFile();
+            if(parent == null || !parent.exists()) return false;
+
+            desktop.open(parent);
+            return true;
+        }
+
+        protected boolean tryOpenAsUrl(Desktop desktop) throws IOException {
+            try {
+                if(desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(new URL(link).toURI());
+                    return true;
                 }
+            } catch(MalformedURLException | URISyntaxException ignored) {
             }
             return false;
         }

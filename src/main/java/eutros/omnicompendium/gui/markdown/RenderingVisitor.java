@@ -4,14 +4,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
-import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.FileHelper;
+import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.TextHelper;
 import eutros.omnicompendium.loader.ImageLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import org.commonmark.ext.gfm.strikethrough.Strikethrough;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class RenderingVisitor extends AbstractVisitor {
 
@@ -371,13 +373,23 @@ public class RenderingVisitor extends AbstractVisitor {
         lineBreak(image);
     }
 
-    private static ImmutableList<String> linkTooltip(@Nullable String title, String link) {
+    private static Supplier<List<String>> linkTooltip(@Nullable String title, String link) {
+        List<String> sneak = linkTooltip(title, link, true);
+        List<String> noSneak = linkTooltip(title, link, false);
+        return () -> GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak) ?
+                     sneak :
+                     noSneak;
+    }
+
+    private static List<String> linkTooltip(@Nullable String title, String link, boolean shiftHeld) {
         ImmutableList.Builder<String> builder = ImmutableList.builder();
 
         if(title != null) builder.add(TextFormatting.DARK_GRAY + title);
         builder.add(
                 TextFormatting.BLUE + link,
-                TextFormatting.GRAY + "" + TextFormatting.ITALIC + I18n.format("omnicompendium.component.link_click")
+                TextFormatting.GRAY + "" + TextFormatting.ITALIC + I18n.format(shiftHeld ?
+                                                                               "omnicompendium.component.link_open_containing" :
+                                                                               "omnicompendium.component.link_open")
         );
 
         return builder.build();
@@ -396,7 +408,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
             String title = link.getTitle();
             String destination = link.getDestination();
-            List<String> tooltip = linkTooltip(title, destination);
+            Supplier<List<String>> tooltip = linkTooltip(title, destination);
 
             CompendiumEntry.LinkFunction func = entry.linkFunction(destination);
 
