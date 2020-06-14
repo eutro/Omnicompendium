@@ -8,6 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,9 +70,9 @@ public class CompendiumEntries {
             return Optional.empty();
         }
         String relativePath = matcher.group("relative");
-        File file = FileHelper.getRelative(source, relativePath);
+        Optional<Path> path = FileHelper.getRelative(source, relativePath);
 
-        return fromSource(file);
+        return path.map(Path::toFile).flatMap(CompendiumEntries::fromSource);
     }
 
     public static void refresh() {

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,8 +119,10 @@ public class CompendiumEntry {
         float maxScroll = getMaxScroll();
         float scrollPct = scroll / maxScroll;
 
-        int barHeight = (int) (GuiCompendium.ENTRY_HEIGHT *
-                ((float) GuiCompendium.ENTRY_HEIGHT / (Math.max(RenderingVisitor.INSTANCE.y + PAD_BOTTOM, GuiCompendium.ENTRY_HEIGHT))));
+        int barHeight = (int) (
+                GuiCompendium.ENTRY_HEIGHT *
+                        ((float) GuiCompendium.ENTRY_HEIGHT / (Math.max(RenderingVisitor.INSTANCE.y + PAD_BOTTOM, GuiCompendium.ENTRY_HEIGHT)))
+        );
         int barY = (int) ((GuiCompendium.ENTRY_HEIGHT - barHeight) * scrollPct);
 
         return new int[] {
@@ -310,10 +313,10 @@ public class CompendiumEntry {
             try {
                 if(Desktop.isDesktopSupported()) {
                     Desktop desktop = Desktop.getDesktop();
-                    File file = FileHelper.getRelative(source, link);
-                    if(tryOpenContaining(desktop, file)) return true;
+
+                    if(tryOpenContaining(desktop)) return true;
                     if(tryOpenAsEntry()) return true;
-                    if(tryOpenAsFile(desktop, file)) return true;
+                    if(tryOpenAsFile(desktop)) return true;
                     if(tryOpenAsUrl(desktop)) return true;
                 }
             } catch(Throwable e) {
@@ -332,24 +335,31 @@ public class CompendiumEntry {
             return false;
         }
 
-        protected boolean tryOpenAsFile(Desktop desktop, File file) throws IOException {
-            if(!file.exists()
-                    || !desktop.isSupported(Desktop.Action.OPEN)
+        protected boolean tryOpenAsFile(Desktop desktop) throws IOException {
+            if(!desktop.isSupported(Desktop.Action.OPEN)
                     || GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
+            Optional<File> file = FileHelper.getRelative(source, link)
+                    .map(Path::toFile)
+                    .filter(File::exists);
 
-            desktop.open(file.getCanonicalFile());
+            if(!file.isPresent()) return false;
 
-            return false;
+            desktop.open(file.get().getCanonicalFile());
+            return true;
         }
 
-        protected boolean tryOpenContaining(Desktop desktop, File file) throws IOException {
+        protected boolean tryOpenContaining(Desktop desktop) throws IOException {
             if(!desktop.isSupported(Desktop.Action.OPEN)
                     || !GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindSneak)) return false;
 
-            File parent = file.getParentFile();
-            if(parent == null || !parent.exists()) return false;
+            Optional<File> parent = FileHelper.getRelative(source, link)
+                    .map(Path::getParent)
+                    .map(Path::toFile)
+                    .filter(File::exists);
 
-            desktop.open(parent.getCanonicalFile());
+            if(!parent.isPresent()) return false;
+
+            desktop.open(parent.get().getCanonicalFile());
             return true;
         }
 

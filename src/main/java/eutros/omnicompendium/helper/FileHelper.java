@@ -2,6 +2,7 @@ package eutros.omnicompendium.helper;
 
 import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.loader.GitLoader;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -10,12 +11,17 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,13 +35,13 @@ public class FileHelper {
                     .filter(path -> !root.relativize(path).toString().startsWith("."))
                     .map(Path::toFile)
                     .filter(File::isFile)
-                    .filter(f -> f.toString().toLowerCase().endsWith(".md"));
+                    .filter(f -> FilenameUtils.getExtension(f.getName()).toLowerCase().equals("md"));
         } catch(IOException e) {
             return Stream.empty();
         }
     }
 
-    public static List<Pair<File, BufferedImage>> getImages() {
+    public static List<Pair<Path, BufferedImage>> getImages() {
         try {
             Path root = GitLoader.DIR.toPath();
             return Files.walk(root, FileVisitOption.FOLLOW_LINKS)
@@ -46,7 +52,7 @@ public class FileHelper {
                         try {
                             BufferedImage image = ImageIO.read(file);
                             if(image == null) return null;
-                            return Pair.of(file, image);
+                            return Pair.of(file.toPath(), image);
                         } catch(IOException e) {
                             return null;
                         }
@@ -62,15 +68,20 @@ public class FileHelper {
     }
 
     @Nonnull
-    public static File getRelative(@Nullable File source, String relativePath) {
-        String parent = null;
+    public static Optional<Path> getRelative(@Nullable File source, String relativePath) {
+        Path parent = null;
         if(source != null) {
-            parent = source.getParent();
+            parent = source.toPath().getParent();
         }
         if(parent == null) {
-            parent = GitLoader.DIR.getPath();
+            parent = GitLoader.DIR.toPath();
         }
-        return new File(parent, relativePath);
+
+        try {
+            return Optional.of(parent.resolve(URLDecoder.decode(relativePath, StandardCharsets.UTF_8.name())));
+        } catch(InvalidPathException | UnsupportedEncodingException e) {
+            return Optional.empty();
+        }
     }
 
 }

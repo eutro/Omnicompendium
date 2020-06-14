@@ -325,7 +325,7 @@ public class RenderingVisitor extends AbstractVisitor {
         lineBreak(image);
         String link = image.getDestination();
 
-        ImageLoader.Image im = ImageLoader.get(FileHelper.getRelative(source, link));
+        ImageLoader.Image im = FileHelper.getRelative(source, link).map(ImageLoader::get).orElse(ImageLoader.missing);
 
         if(im != ImageLoader.missing) {
             int[] size = im.draw(baseX, y, width);

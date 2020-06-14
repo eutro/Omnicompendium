@@ -14,22 +14,22 @@ import org.lwjgl.opengl.GL11;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ImageLoader {
 
-    private static Map<File, Image> textureMap = new HashMap<>();
+    private static Map<Path, Image> textureMap = new HashMap<>();
 
     public static Image missing = null;
 
     public static void load() {
-        List<Pair<File, BufferedImage>> images = FileHelper.getImages();
+        List<Pair<Path, BufferedImage>> images = FileHelper.getImages();
         Minecraft.getMinecraft().addScheduledTask(() -> {
             clear();
             Omnicompendium.LOGGER.info("Loading images.");
@@ -49,7 +49,7 @@ public class ImageLoader {
                 Omnicompendium.LOGGER.warn("Failed to load missing image texture.", e);
             }
 
-            for(Pair<File, BufferedImage> pair : images) {
+            for(Pair<Path, BufferedImage> pair : images) {
                 textureMap.put(pair.getLeft(), new Image(intBuf.get(), pair.getRight()));
             }
             Omnicompendium.LOGGER.info("Finished loading images.");
@@ -63,8 +63,8 @@ public class ImageLoader {
         textureMap.clear();
     }
 
-    public static Image get(File file) {
-        return textureMap.getOrDefault(file, missing);
+    public static Image get(Path path) {
+        return textureMap.getOrDefault(path, missing);
     }
 
     public static class Image {
