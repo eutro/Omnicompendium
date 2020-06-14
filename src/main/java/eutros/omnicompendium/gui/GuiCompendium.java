@@ -22,17 +22,18 @@ public class GuiCompendium extends GuiScreen {
 
     public static final int TEX_SIZE = 256;
 
-    public static final double GUI_SCALE = 2;
-    public static final int GUI_Y = 2;
+    public static final double GUI_SCALE = 1.75;
+    public static final int GUI_Y = 20;
 
-    public static final int ENTRY_WIDTH = (int) (198 * GUI_SCALE);
-    public static final int ENTRY_HEIGHT = (int) (115 * GUI_SCALE);
-    public static final int ENTRY_LIST_WIDTH = (int) (45 * GUI_SCALE);
-    public static final int ENTRY_LIST_HEIGHT = (int) (98 * GUI_SCALE);
+    public static final int ENTRY_WIDTH = (int) (182 * GUI_SCALE);
+    public static final int ENTRY_HEIGHT = (int) (104 * GUI_SCALE);
+    public static final int ENTRY_LIST_WIDTH = (int) (37 * GUI_SCALE);
+    public static final int ENTRY_LIST_HEIGHT = (int) (96 * GUI_SCALE);
 
-    public static final int ENTRY_LIST_Y = (int) (11 * GUI_SCALE);
-    public static final int ENTRY_X = (int) (50 * GUI_SCALE);
-    public static final int ENTRY_Y = (int) (7 * GUI_SCALE);
+    public static final int ENTRY_LIST_Y = (int) (17 * GUI_SCALE);
+    public static final int ENTRY_LIST_X = (int) (8 * GUI_SCALE);
+    public static final int ENTRY_X = (int) (60 * GUI_SCALE);
+    public static final int ENTRY_Y = (int) (12 * GUI_SCALE);
 
     private final EntryList entryList;
 
@@ -92,7 +93,7 @@ public class GuiCompendium extends GuiScreen {
             tooltip = entry.getTooltip(entryMouse.x, entryMouse.y);
         }
 
-        if(tooltip == null && MouseHelper.contains(0, 0, ENTRY_LIST_WIDTH + 10, ENTRY_LIST_HEIGHT, entryListMouse.x, entryListMouse.y)) {
+        if(tooltip == null && MouseHelper.contains(0, 0, ENTRY_LIST_WIDTH, ENTRY_LIST_HEIGHT, entryListMouse.x, entryListMouse.y)) {
             tooltip = entryList.getTooltip(entryListMouse.y);
         }
 
@@ -108,11 +109,11 @@ public class GuiCompendium extends GuiScreen {
 
     @Nonnull
     private Point transmuteEntryListMouse(Point mouse) {
-        return new Point(mouse.x, mouse.y - ENTRY_LIST_Y);
+        return new Point(mouse.x - ENTRY_LIST_X, mouse.y - ENTRY_LIST_Y);
     }
 
     private void drawEntryList() {
-        GlStateManager.translate(0, ENTRY_LIST_Y, 0);
+        GlStateManager.translate(ENTRY_LIST_X, ENTRY_LIST_Y, 0);
         entryList.draw(entry);
     }
 
@@ -129,7 +130,12 @@ public class GuiCompendium extends GuiScreen {
         mouseY -= GUI_Y;
         mouseY -= ENTRY_Y;
 
-        if(!MouseHelper.contains(0, 0, ENTRY_WIDTH + 10, ENTRY_HEIGHT, mouseX, mouseY))
+        if(!MouseHelper.contains(0,
+                0,
+                CompendiumEntry.SCROLL_BAR_X + CompendiumEntry.SCROLL_BAR_WIDTH,
+                ENTRY_HEIGHT,
+                mouseX,
+                mouseY))
             return;
 
         entry.mouseClicked(mouseX, mouseY, mouseButton);
@@ -151,7 +157,7 @@ public class GuiCompendium extends GuiScreen {
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight;
         mouseY -= GUI_Y;
 
-        if(MouseHelper.isClicked(0,
+        if(MouseHelper.isClicked(ENTRY_LIST_X,
                 ENTRY_LIST_Y,
                 ENTRY_LIST_WIDTH,
                 ENTRY_LIST_HEIGHT,
