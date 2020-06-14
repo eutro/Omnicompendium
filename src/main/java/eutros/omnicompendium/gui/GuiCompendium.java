@@ -5,7 +5,9 @@ import eutros.omnicompendium.gui.entry.CompendiumEntries;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.gui.entry.EntryList;
 import eutros.omnicompendium.helper.MouseHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Mouse;
@@ -22,38 +24,52 @@ public class GuiCompendium extends GuiScreen {
 
     public static final int TEX_SIZE = 256;
 
-    public static final double GUI_SCALE = 1.75;
+    public static double GUI_SCALE;
     public static final int GUI_Y = 20;
+    public static int GUI_X;
 
-    public static final int ENTRY_WIDTH = (int) (182 * GUI_SCALE);
-    public static final int ENTRY_HEIGHT = (int) (104 * GUI_SCALE);
-    public static final int ENTRY_LIST_WIDTH = (int) (37 * GUI_SCALE);
-    public static final int ENTRY_LIST_HEIGHT = (int) (96 * GUI_SCALE);
+    public static int ENTRY_WIDTH;
+    public static int ENTRY_HEIGHT;
+    public static int ENTRY_LIST_WIDTH;
+    public static int ENTRY_LIST_HEIGHT;
 
-    public static final int ENTRY_LIST_Y = (int) (17 * GUI_SCALE);
-    public static final int ENTRY_LIST_X = (int) (8 * GUI_SCALE);
-    public static final int ENTRY_X = (int) (60 * GUI_SCALE);
-    public static final int ENTRY_Y = (int) (12 * GUI_SCALE);
+    public static int ENTRY_LIST_Y;
+    public static int ENTRY_LIST_X;
+    public static int ENTRY_X;
+    public static int ENTRY_Y;
 
     private final EntryList entryList;
 
     private CompendiumEntry entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
 
-    public int getGuiX() {
-        return (int) ((width - TEX_SIZE * GUI_SCALE) / 2);
-    }
-
     public GuiCompendium() {
         super();
-        this.setGuiSize(TEX_SIZE, TEX_SIZE);
+        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+        this.setGuiSize(sr.getScaledWidth(), sr.getScaledHeight());
+        initGui();
         entryList = new EntryList(CompendiumEntries.listEntries, this);
+    }
+
+    @Override
+    public void initGui() {
+        GUI_SCALE = Math.min((double) width / TEX_SIZE, height / ((double) (TEX_SIZE + 2 * GUI_Y) / 2));
+
+        GUI_X = (int) ((width - TEX_SIZE * GUI_SCALE) / 2);
+        ENTRY_WIDTH = (int) (182 * GUI_SCALE);
+        ENTRY_HEIGHT = (int) (104 * GUI_SCALE);
+        ENTRY_LIST_WIDTH = (int) (37 * GUI_SCALE);
+        ENTRY_LIST_HEIGHT = (int) (96 * GUI_SCALE);
+        ENTRY_LIST_Y = (int) (17 * GUI_SCALE);
+        ENTRY_LIST_X = (int) (8 * GUI_SCALE);
+        ENTRY_X = (int) (60 * GUI_SCALE);
+        ENTRY_Y = (int) (12 * GUI_SCALE);
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
-        int i = getGuiX();
+        int i = GUI_X;
 
         {
             GlStateManager.pushMatrix();
@@ -124,7 +140,7 @@ public class GuiCompendium extends GuiScreen {
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        mouseX -= getGuiX();
+        mouseX -= GUI_X;
         mouseX -= ENTRY_X;
 
         mouseY -= GUI_Y;
@@ -132,7 +148,7 @@ public class GuiCompendium extends GuiScreen {
 
         if(!MouseHelper.contains(0,
                 0,
-                CompendiumEntry.SCROLL_BAR_X + CompendiumEntry.SCROLL_BAR_WIDTH,
+                ENTRY_WIDTH + CompendiumEntry.SCROLL_BAR_OFFSET + CompendiumEntry.SCROLL_BAR_WIDTH,
                 ENTRY_HEIGHT,
                 mouseX,
                 mouseY))
@@ -152,7 +168,7 @@ public class GuiCompendium extends GuiScreen {
         super.handleMouseInput();
 
         int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-        mouseX -= getGuiX();
+        mouseX -= GUI_X;
 
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight;
         mouseY -= GUI_Y;

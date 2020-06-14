@@ -33,7 +33,7 @@ public class EntryList {
 
     public void draw(CompendiumEntry currentPage) {
         RenderHelper.setupCamera(
-                compendium.getGuiX() + GuiCompendium.ENTRY_LIST_X,
+                GuiCompendium.GUI_X + GuiCompendium.ENTRY_LIST_X,
                 GuiCompendium.GUI_Y + GuiCompendium.ENTRY_LIST_Y,
                 GuiCompendium.ENTRY_LIST_WIDTH,
                 GuiCompendium.ENTRY_LIST_HEIGHT

@@ -39,7 +39,7 @@ public class CompendiumEntry {
 
     public static final int SCROLL_BAR_WIDTH = 10;
     public static final int PAD_BOTTOM = 10;
-    public static final int SCROLL_BAR_X = GuiCompendium.ENTRY_WIDTH + 2;
+    public static final int SCROLL_BAR_OFFSET = 2;
     private final Node node;
     private final String title;
     protected GuiCompendium compendium;
@@ -93,7 +93,7 @@ public class CompendiumEntry {
 
     public void draw() {
         RenderHelper.setupCamera(
-                compendium.getGuiX() + GuiCompendium.ENTRY_X,
+                GuiCompendium.GUI_X + GuiCompendium.ENTRY_X,
                 GuiCompendium.GUI_Y + GuiCompendium.ENTRY_Y,
                 GuiCompendium.ENTRY_WIDTH,
                 GuiCompendium.ENTRY_HEIGHT
@@ -123,7 +123,7 @@ public class CompendiumEntry {
         int barY = (int) ((GuiCompendium.ENTRY_HEIGHT - barHeight) * scrollPct);
 
         return new int[] {
-                SCROLL_BAR_X,
+                GuiCompendium.ENTRY_WIDTH + SCROLL_BAR_OFFSET,
                 barY,
                 SCROLL_BAR_WIDTH,
                 barHeight
@@ -215,7 +215,7 @@ public class CompendiumEntry {
                     mouseY
             )) {
                 scrollBarClicked = (mouseY - barY) / (float) barHeight;
-            } else if(MouseHelper.isClicked(SCROLL_BAR_X,
+            } else if(MouseHelper.isClicked(GuiCompendium.ENTRY_WIDTH + SCROLL_BAR_OFFSET,
                     0,
                     SCROLL_BAR_WIDTH,
                     GuiCompendium.ENTRY_HEIGHT,
