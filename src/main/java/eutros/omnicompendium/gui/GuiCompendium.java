@@ -40,6 +40,7 @@ public class GuiCompendium extends GuiScreen {
 
     private final EntryList entryList;
 
+    @Nonnull
     private CompendiumEntry entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
 
     public GuiCompendium() {
@@ -63,6 +64,8 @@ public class GuiCompendium extends GuiScreen {
         ENTRY_LIST_X = (int) (8 * GUI_SCALE);
         ENTRY_X = (int) (60 * GUI_SCALE);
         ENTRY_Y = (int) (12 * GUI_SCALE);
+
+        entry.setCompendium(this);
     }
 
     @Override

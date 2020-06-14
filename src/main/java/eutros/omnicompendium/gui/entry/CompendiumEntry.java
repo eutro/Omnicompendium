@@ -229,6 +229,7 @@ public class CompendiumEntry {
 
     public CompendiumEntry setCompendium(GuiCompendium compendium) {
         this.compendium = compendium;
+        clickableComponents = null;
         return this;
     }
 
