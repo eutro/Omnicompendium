@@ -55,7 +55,7 @@ public class EntryList {
                         titleX -= MathHelper.clamp(
                                 (int) (mc.world.getWorldTime() % stringWidth) - GuiCompendium.ENTRY_LIST_WIDTH / 2,
                                 0,
-                                stringWidth - GuiCompendium.ENTRY_LIST_WIDTH + titleX
+                                stringWidth - GuiCompendium.ENTRY_LIST_WIDTH + 2 * titleX
                         );
                     }
                 }
