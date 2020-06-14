@@ -197,11 +197,11 @@ public class CompendiumEntry {
         GlStateManager.disableBlend();
     }
 
-    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
         if(clickableComponents != null) {
             for(MouseHelper.ClickableComponent component : clickableComponents) {
                 if(component.onClick(mouseX, mouseY + scroll, mouseButton))
-                    return;
+                    return true;
             }
         }
 
@@ -226,8 +226,12 @@ public class CompendiumEntry {
                     mouseY)) {
                 setScroll(mouseY - barHeight / 2, barHeight);
                 scrollBarClicked = 0.5F;
+            } else {
+                return false;
             }
+            return true;
         }
+        return false;
     }
 
     public CompendiumEntry setCompendium(GuiCompendium compendium) {
@@ -308,15 +312,15 @@ public class CompendiumEntry {
 
         @Override
         public boolean click(int mouseX, int mouseY, int mouseButton) {
-            if(tryOpenAsEntry()) return true;
+            if(mouseButton != 0) return false;
 
             try {
                 if(Desktop.isDesktopSupported()) {
                     Desktop desktop = Desktop.getDesktop();
 
-                    if(tryOpenContaining(desktop)) return true;
                     if(tryOpenAsEntry()) return true;
                     if(tryOpenAsFile(desktop)) return true;
+                    if(tryOpenContaining(desktop)) return true;
                     if(tryOpenAsUrl(desktop)) return true;
                 }
             } catch(Throwable e) {
@@ -329,7 +333,7 @@ public class CompendiumEntry {
             Optional<CompendiumEntry> linkedEntry = CompendiumEntries.fromLink(link, source);
             GuiCompendium gui = getCompendium();
             if(linkedEntry.isPresent()) {
-                gui.setEntry(linkedEntry.get());
+                gui.openEntry(linkedEntry.get());
                 return true;
             }
             return false;

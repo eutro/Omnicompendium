@@ -16,6 +16,7 @@ import javax.annotation.Nonnull;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.Stack;
 
 public class GuiCompendium extends GuiScreen {
 
@@ -40,8 +41,15 @@ public class GuiCompendium extends GuiScreen {
 
     private final EntryList entryList;
 
+    public static final CompendiumEntry DEFAULT_ENTRY = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN);
+    private static Stack<CompendiumEntry> entryStack = new Stack<>();
+
+    static {
+        entryStack.push(DEFAULT_ENTRY);
+    }
+
     @Nonnull
-    private CompendiumEntry entry = CompendiumEntries.fromResourceLocation(DEFAULT_LOCATION).orElse(CompendiumEntries.Entries.BROKEN).setCompendium(this);
+    private CompendiumEntry entry = entryStack.peek().setCompendium(this);
 
     public GuiCompendium() {
         super();
@@ -157,12 +165,24 @@ public class GuiCompendium extends GuiScreen {
                 mouseY))
             return;
 
-        entry.mouseClicked(mouseX, mouseY, mouseButton);
+        if(entry.mouseClicked(mouseX, mouseY, mouseButton)) return;
+
+        if(mouseButton == 1) popEntry();
     }
 
-    public void setEntry(CompendiumEntry entry) {
-        this.entry = entry;
-        entry.setCompendium(this);
+    public void popEntry() {
+        if(entryStack.size() >= 2) {
+            entryStack.pop();
+            setEntry(entryStack.peek());
+        }
+    }
+
+    public void openEntry(CompendiumEntry entry) {
+        setEntry(entryStack.push(entry));
+    }
+
+    private void setEntry(CompendiumEntry entry) {
+        this.entry = entry.setCompendium(this);
         entry.reset();
     }
 

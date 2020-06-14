@@ -95,7 +95,7 @@ public class EntryList {
 
         if(button == 0 && buttonState) {
             Optional<CompendiumEntry> entry = getEntryUnderMouse(mouseY);
-            entry.ifPresent(compendium::setEntry);
+            entry.ifPresent(compendium::openEntry);
 
             flag |= entry.isPresent();
         }
