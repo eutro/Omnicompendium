@@ -1,6 +1,7 @@
 package eutros.omnicompendium.gui.entry;
 
 import eutros.omnicompendium.Omnicompendium;
+import eutros.omnicompendium.gui.ClickableComponent;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.markdown.RenderingVisitor;
 import eutros.omnicompendium.gui.markdown.TitleVisitor;
@@ -8,12 +9,9 @@ import eutros.omnicompendium.helper.FileHelper;
 import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.RenderHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.math.MathHelper;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.text.WordUtils;
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -34,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 public class CompendiumEntry {
 
@@ -43,16 +40,14 @@ public class CompendiumEntry {
     public static final int SCROLL_BAR_OFFSET = 2;
     private final Node node;
     private final String title;
-    protected GuiCompendium compendium;
+    private GuiCompendium compendium;
+    private float scrollBarClicked = -1;
 
     @Nullable
-    public List<MouseHelper.ClickableComponent> clickableComponents = null;
-
+    public List<ClickableComponent> clickableComponents = null;
     @Nullable
     public final File source;
     public int scroll = 0;
-
-    private float scrollBarClicked = -1;
 
     public CompendiumEntry(String markdown, @Nullable File source) {
         List<Extension> extensions = Arrays.asList(
@@ -70,26 +65,10 @@ public class CompendiumEntry {
         if(visitor.title != null) {
             title = visitor.title;
         } else if(source != null) {
-            String baseName = FilenameUtils.getBaseName(source.getName());
-            title = splitFileName(baseName);
+            title = FileHelper.fileNameToTitle(source);
         } else {
             title = CompendiumEntries.UNTITLED;
         }
-    }
-
-    public static final Pattern CAMEL_SPLITTER = Pattern.compile("([a-z])([A-Z])");
-
-    private String splitFileName(String name) {
-        if(name.contains("_")) { // snake_case
-            name = String.join(" ", name.split("_"));
-        } else if(name.contains("-")) { // hyphen-case
-            name = String.join(" ", name.split("-"));
-        } else if(!name.contains(" ")) { // camelCase/PascalCase
-            name = CAMEL_SPLITTER.matcher(name).replaceAll("$1 $2");
-        } else {
-            return name;
-        }
-        return WordUtils.capitalizeFully(name);
     }
 
     public void draw() {
@@ -112,7 +91,7 @@ public class CompendiumEntry {
 
         RenderHelper.resetCamera();
 
-        drawScrollBar();
+        RenderHelper.drawScrollBar(getScrollBar(), scrollBarClicked);
     }
 
     private int[] getScrollBar() {
@@ -148,58 +127,9 @@ public class CompendiumEntry {
         );
     }
 
-    private void drawScrollBar() {
-        int[] bar = getScrollBar();
-        int x = bar[0];
-        int y = bar[1];
-        int width = bar[2];
-        int height = bar[3];
-
-        int border = 2;
-        Gui.drawRect( // corners
-                x,
-                y,
-                x + width,
-                y + height,
-                0xFF7E7E7E
-        );
-        Gui.drawRect( // top left
-                x,
-                y,
-                x + width - border,
-                y + height - border,
-                0xFFFFFFFF
-        );
-        Gui.drawRect( // bottom right
-                x + border,
-                y + border,
-                x + width,
-                y + height,
-                0xFF373737
-        );
-        Gui.drawRect( // inner section
-                x + border,
-                y + border,
-                x + width - border,
-                y + height - border,
-                0xFF8B8B8B
-        );
-        if(scrollBarClicked < 0) return;
-
-        GlStateManager.enableBlend();
-        Gui.drawRect( // overlay
-                x,
-                y,
-                x + width,
-                y + height,
-                0x22FFFFFF
-        );
-        GlStateManager.disableBlend();
-    }
-
     public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
         if(clickableComponents != null) {
-            for(MouseHelper.ClickableComponent component : clickableComponents) {
+            for(ClickableComponent component : clickableComponents) {
                 if(component.onClick(mouseX, mouseY + scroll, mouseButton))
                     return true;
             }
@@ -259,13 +189,14 @@ public class CompendiumEntry {
             }
         }
 
-        int scroll = this.scroll - (int) (Mouse.getDWheel() * SCROLL_SENSITIVITY);
-
-        this.scroll = MathHelper.clamp(
-                scroll,
-                0,
-                maxScroll
-        );
+        int wheel = Mouse.getDWheel();
+        if(wheel != 0) {
+            scroll = MathHelper.clamp(
+                    (int) (scroll - wheel * SCROLL_SENSITIVITY),
+                    0,
+                    maxScroll
+            );
+        }
     }
 
     private int getMaxScroll() {
@@ -276,7 +207,7 @@ public class CompendiumEntry {
     public List<String> getTooltip(int mouseX, int mouseY) {
         if(clickableComponents != null) {
             mouseY += scroll;
-            for(MouseHelper.ClickableComponent component : clickableComponents) {
+            for(ClickableComponent component : clickableComponents) {
                 if(component.isHovered(mouseX, mouseY)) {
                     List<String> tooltip = component.getTooltip();
                     if(tooltip != null) {
@@ -302,7 +233,7 @@ public class CompendiumEntry {
         return new LinkFunction(destination);
     }
 
-    public class LinkFunction implements MouseHelper.ClickFunction {
+    public class LinkFunction implements ClickableComponent.ClickFunction {
 
         private final String link;
 

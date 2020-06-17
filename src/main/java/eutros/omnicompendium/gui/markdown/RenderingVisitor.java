@@ -2,10 +2,10 @@ package eutros.omnicompendium.gui.markdown;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import eutros.omnicompendium.gui.ClickableComponent;
 import eutros.omnicompendium.gui.GuiCompendium;
 import eutros.omnicompendium.gui.entry.CompendiumEntry;
 import eutros.omnicompendium.helper.FileHelper;
-import eutros.omnicompendium.helper.MouseHelper;
 import eutros.omnicompendium.helper.TextHelper;
 import eutros.omnicompendium.loader.ImageLoader;
 import net.minecraft.client.Minecraft;
@@ -208,7 +208,7 @@ public class RenderingVisitor extends AbstractVisitor {
         String info = fencedCodeBlock.getInfo();
         if(entry != null && entry.clickableComponents != null && info != null && !info.trim().isEmpty()) {
             entry.clickableComponents.add(
-                    MouseHelper.ClickableComponent.byBounds(
+                    ClickableComponent.byBounds(
                             rect[0],
                             rect[1],
                             rect[2],
@@ -322,7 +322,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Image image) {
-        lineBreak(image);
+        finishLine();
         String link = image.getDestination();
 
         ImageLoader.Image im = FileHelper.getRelative(source, link).map(ImageLoader::get).orElse(ImageLoader.missing);
@@ -331,7 +331,7 @@ public class RenderingVisitor extends AbstractVisitor {
             int[] size = im.draw(baseX, y, width);
             if(entry != null && entry.clickableComponents != null) {
                 entry.clickableComponents.add(
-                        MouseHelper.ClickableComponent.bySize(
+                        ClickableComponent.bySize(
                                 baseX,
                                 y,
                                 size[0],
@@ -358,7 +358,7 @@ public class RenderingVisitor extends AbstractVisitor {
 
             if(entry != null && entry.clickableComponents != null) {
                 entry.clickableComponents.add(
-                        MouseHelper.ClickableComponent.byBounds(
+                        ClickableComponent.byBounds(
                                 baseX,
                                 startY,
                                 baseX + width,
@@ -412,50 +412,38 @@ public class RenderingVisitor extends AbstractVisitor {
 
             CompendiumEntry.LinkFunction func = entry.linkFunction(destination);
 
+            ClickableComponent clickable = ClickableComponent.empty()
+                    .withTooltip(tooltip)
+                    .withCallback(func);
+            entry.clickableComponents.add(clickable);
             if(startY != y) {
-                entry.clickableComponents.add(
-                        MouseHelper.ClickableComponent.bySize(
-                                baseX + startX,
-                                startY,
-                                width - startX,
-                                fontHeight
-                        )
-                                .withTooltip(tooltip)
-                                .withCallback(func)
+                clickable.addArea(
+                        baseX + startX,
+                        startY,
+                        width - startX,
+                        fontHeight
                 );
                 int deltaY = y - startY;
                 if(deltaY != fontHeight) {
-                    entry.clickableComponents.add(
-                            MouseHelper.ClickableComponent.bySize(
-                                    baseX,
-                                    startY + fontHeight,
-                                    width,
-                                    deltaY - fontHeight
-                            )
-                                    .withTooltip(tooltip)
-                                    .withCallback(func)
+                    clickable.addArea(
+                            baseX,
+                            startY + fontHeight,
+                            width,
+                            deltaY - fontHeight
                     );
                 }
-                entry.clickableComponents.add(
-                        MouseHelper.ClickableComponent.bySize(
-                                baseX,
-                                y,
-                                x,
-                                fontHeight
-                        )
-                                .withTooltip(tooltip)
-                                .withCallback(func)
+                clickable.addArea(
+                        baseX,
+                        y,
+                        x,
+                        fontHeight
                 );
             } else {
-                entry.clickableComponents.add(
-                        MouseHelper.ClickableComponent.bySize(
-                                baseX + startX,
-                                y,
-                                x - startX,
-                                fontHeight
-                        )
-                                .withTooltip(tooltip)
-                                .withCallback(func)
+                clickable.addArea(
+                        baseX + startX,
+                        y,
+                        x - startX,
+                        fontHeight
                 );
             }
         }

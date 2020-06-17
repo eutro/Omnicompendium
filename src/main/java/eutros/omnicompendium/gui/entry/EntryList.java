@@ -108,8 +108,7 @@ public class EntryList {
         if(mouseY < 0 || mouseY > GuiCompendium.ENTRY_LIST_HEIGHT)
             return Optional.empty();
 
-        mouseY += scroll;
-        int index = mouseY / ICON_HEIGHT;
+        int index = (mouseY + scroll) / ICON_HEIGHT;
         if(index >= entries.size())
             return Optional.empty();
 
@@ -123,12 +122,11 @@ public class EntryList {
                     ArrayList<String> tooltip = new ArrayList<>();
                     tooltip.add(entry.getTitle());
                     if(entry.source != null) {
-                        tooltip.add(TextFormatting.BLUE + "" + TextFormatting.ITALIC + entry.source.toPath().getFileName().toString());
+                        tooltip.add(TextFormatting.BLUE.toString() + TextFormatting.ITALIC + entry.source.getName());
                     }
                     return tooltip;
                 })
                 .orElse(null);
-
     }
 
 }

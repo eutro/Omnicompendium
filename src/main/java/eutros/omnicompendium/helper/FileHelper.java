@@ -3,6 +3,7 @@ package eutros.omnicompendium.helper;
 import eutros.omnicompendium.Omnicompendium;
 import eutros.omnicompendium.loader.GitLoader;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -22,10 +23,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileHelper {
+
+    private static final Pattern CAMEL_SPLITTER = Pattern.compile("([a-z])([A-Z])");
 
     public static Stream<File> getEntries() {
         try {
@@ -82,6 +86,20 @@ public class FileHelper {
         } catch(InvalidPathException | UnsupportedEncodingException e) {
             return Optional.empty();
         }
+    }
+
+    public static String fileNameToTitle(@Nonnull File file) {
+        String name = FilenameUtils.getBaseName(file.getName());
+        if(name.contains("_")) { // snake_case
+            name = String.join(" ", name.split("_"));
+        } else if(name.contains("-")) { // hyphen-case
+            name = String.join(" ", name.split("-"));
+        } else if(!name.contains(" ")) { // camelCase/PascalCase
+            name = CAMEL_SPLITTER.matcher(name).replaceAll("$1 $2");
+        } else {
+            return name;
+        }
+        return WordUtils.capitalizeFully(name);
     }
 
 }

@@ -70,9 +70,10 @@ public class CompendiumEntries {
             return Optional.empty();
         }
         String relativePath = matcher.group("relative");
-        Optional<Path> path = FileHelper.getRelative(source, relativePath);
 
-        return path.map(Path::toFile).flatMap(CompendiumEntries::fromSource);
+        return FileHelper.getRelative(source, relativePath)
+                .map(Path::toFile)
+                .flatMap(CompendiumEntries::fromSource);
     }
 
     public static void refresh() {
