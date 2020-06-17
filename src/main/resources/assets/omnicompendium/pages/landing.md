@@ -1,30 +1,6 @@
-# Hello, and welcome to the Omnicompendium
+# Hello, and welcome to the Omnicompendium.
 
-You will find all kinds of guides here, so enjoy your stay.
-*a* on the left, *b __on the right__, ~~o~~kay*?
+## Navigation
 
----
-
-we live in a society
-## bottom
-### text
-#### texxt
-##### text
-bottom text |
-
-aliiiiiiiiii|
-
-`bottom text|`
-
-`aliiiiiiiii|`
-```
-bottom text
-```
-
-A
-# A
-## B
-### C
-#### D
-##### E
-###### F
+You can select an entry to read on the left, and it will appear in this pane.
+Right-clicking this pane will go back to the previous entry.
